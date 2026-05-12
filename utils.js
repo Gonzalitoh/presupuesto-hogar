@@ -12,7 +12,7 @@ function fmtCat(c){
 function catSelectOpts(selId, selVal){
   var h='<select id="'+selId+'" style="color:'+(selVal?'var(--text)':'var(--text3)')+'" onchange="this.style.color=\'var(--text)\'">';
   h+='<option value=""'+(selVal?'':' selected')+' disabled style="color:var(--text3)">Seleccione una categor&#237;a...</option>';
-  for(var i=0;i<CV.length;i++){h+='<option value="'+CV[i]+'"'+(CV[i]===selVal?' selected':'')+'>'+CV[i]+'</option>';}
+  for(var i=0;i<CV.length;i++){h+='<option value="'+CV[i]+'" style="color:var(--text)"'+(CV[i]===selVal?' selected':'')+'>'+CV[i]+'</option>';}
   h+='</select>';
   return h;
 }
