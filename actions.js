@@ -103,8 +103,8 @@ function saveCfg(){
 function addCard(){
     var b = document.getElementById("nc-b").value;
     var br = document.getElementById("nc-br").value;
-    var dCierre = document.getElementById("nc-cierre").value;
-    var dVenc = document.getElementById("nc-venc").value;
+    var dCierre = document.getElementById("nc-cierre") ? document.getElementById("nc-cierre").value : "";
+    var dVenc = document.getElementById("nc-venc") ? document.getElementById("nc-venc").value : "";
     if(!b) { showT("Falta completar el Banco"); return; }
     
     var p = S.nCard.p || ((S.data.mbs||[]).length > 0 ? (S.data.mbs||[])[0].n : "");
@@ -119,6 +119,34 @@ function delCard(id){
     S.ccData.txs = nt;
     saveCC(); S.showDelCard=0; render();
 }
+function openEditCard(id){
+    var c = null;
+    for(var i=0;i<S.ccData.cards.length;i++){if(S.ccData.cards[i].id===id){c=S.ccData.cards[i];break}}
+    if(!c)return;
+    S.eCard = {id:c.id, b:c.b, br:c.br, p:c.p||"Hogar", dCierre:c.dCierre||"", dVenc:c.dVenc||""};
+    S.showEditCard = id;
+    render();
+}
+function saveEditCard(){
+    var b = document.getElementById("ec-b").value;
+    var br = document.getElementById("ec-br").value;
+    var dCierre = document.getElementById("ec-cierre").value;
+    var dVenc = document.getElementById("ec-venc").value;
+    if(!b){showT("Falta el nombre del banco");return;}
+    
+    for(var i=0;i<S.ccData.cards.length;i++){
+        if(S.ccData.cards[i].id===S.showEditCard){
+            S.ccData.cards[i].b = b;
+            S.ccData.cards[i].br = br;
+            S.ccData.cards[i].dCierre = dCierre;
+            S.ccData.cards[i].dVenc = dVenc;
+            S.ccData.cards[i].p = S.eCard.p;
+            break;
+        }
+    }
+    saveCC(); S.showEditCard=0; render();
+}
+
 function addCCTx(){
     var cidEl = document.getElementById("nx-cid");
     var dEl = document.getElementById("nx-d");
@@ -144,10 +172,11 @@ function addCCTx(){
     if(S.nCCTx.cur === "USD" && S.nCCTx.mUsd){
       tx.cur = "USD";
       tx.mUsd = parseFloat(S.nCCTx.mUsd) || 0;
-      tx.dolarRate = DOLAR.tarjeta || DOLAR.oficial || 0;
+      tx.payM = S.nCCTx.payM || "ARS";
+      tx.dolarRate = tx.payM === "USD" ? (DOLAR.oficial || 0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
     }
     S.ccData.txs.push(tx);
-    saveCC(); S.showNewCCTx=false; S.nCCTx={cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar"}; render();
+    saveCC(); S.showNewCCTx=false; S.nCCTx={cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar", payM:"ARS"}; render();
 }
 
 function setCCCur(cur){
@@ -173,6 +202,7 @@ function calcUsdToArs(){
     if(eqEl) eqEl.textContent = "Equiv: " + fmt(S.nCCTx.m);
   }
 }
+
 function openEditCCTx(id){
     var tx = null;
     for(var i=0;i<S.ccData.txs.length;i++){if(S.ccData.txs[i].id===id){tx=S.ccData.txs[i];break}}
@@ -272,7 +302,7 @@ function closeM(e){
         S.showConfig=false; S.showNewGasto=false; S.showNewShared=false; 
         S.showCB=false; S.showReset=false; S.showResetFijos=false; S.showMP=false; 
         S.showNewCard=false; S.showNewCCTx=false; S.showDelCard=0; S.showSync=false;
-        S.showEditG=0; S.showEditCCTx=0;
+        S.showEditG=0; S.showEditCCTx=0; S.showEditCard=0;
         
         S.nCCTx.t = "Hogar";
         render();

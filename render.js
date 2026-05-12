@@ -225,7 +225,7 @@ function render(){
               }
 
               h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
-              h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+')'+selectHtml+'</span>';
+              h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta">&#9998;</button>'+selectHtml+'</span>';
               if(card.dCierre || card.dVenc) h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Cierre: Día '+ (card.dCierre||'-') +' &middot; Vence: Día '+ (card.dVenc||'-') +'</div>';
               h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
 
@@ -593,14 +593,15 @@ function render(){
       h+='<div class="ct" style="margin-bottom:16px">Agregar Nueva Tarjeta</div>';
       h+='<div class="ig"><label class="il">Banco (Ej: Santander, Galicia, BBVA)</label><input type="text" id="nc-b" value="'+esc(S.nCard.b)+'" placeholder="Banco"></div>';
       h+='<div class="ig"><label class="il">Marca de la Tarjeta</label><select id="nc-br">';
-      h+='<div class="br" style="margin-bottom:12px">';
-      h+='<div class="ig"><label class="il">Día de Cierre (Ej: 24)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="24"></div>';
-      h+='<div class="ig"><label class="il">Día de Venc. (Ej: 4)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="4"></div>';
-      h+='</div>';
       var brs=["Visa","Mastercard","American Express","Cabal","Naranja","Otra"];
       for(var i=0;i<brs.length;i++)h+='<option value="'+brs[i]+'"'+(brs[i]===S.nCard.br?' selected':'')+'>'+brs[i]+'</option>';
       h+='</select></div>';
       
+      h+='<div class="br" style="margin-bottom:12px">';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Cierre (Ej: 24)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="24"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Venc. (Ej: 4)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="4"></div>';
+      h+='</div>';
+
       if(d.mbs && (d.mbs||[]).length >= 2){
           h+='<div class="ig"><label class="il">Titular de la Tarjeta</label><div class="tr" style="flex-wrap:wrap">';
           var isHogar = (S.nCard.p === "Hogar");
@@ -793,6 +794,40 @@ function render(){
       h+='<div class="ct" style="margin-bottom:10px">&#9888;&#65039; Eliminar tarjeta</div>';
       h+='<p style="font-size:13px;color:var(--text2);margin-bottom:16px">¿Estás seguro que querés eliminar esta tarjeta y TODO su historial de consumos de todos los meses?</p>';
       h+='<div class="br"><button class="bd" onclick="delCard('+S.showDelCard+')">Si, eliminar</button><button class="bs" onclick="SS({showDelCard:0})">Cancelar</button></div>';
+      h+='</div></div>';
+  }
+
+  if(S.showEditCard){
+      h+='<div class="mo" onclick="closeM(event)"><div class="ms" onclick="event.stopPropagation()"><div class="mh"></div>';
+      h+='<div class="ct" style="margin-bottom:16px">Editar Tarjeta</div>';
+      h+='<div class="ig"><label class="il">Banco</label><input type="text" id="ec-b" value="'+esc(S.eCard.b)+'"></div>';
+      h+='<div class="ig"><label class="il">Marca de la Tarjeta</label><select id="ec-br">';
+      var brs=["Visa","Mastercard","American Express","Cabal","Naranja","Otra"];
+      for(var i=0;i<brs.length;i++)h+='<option value="'+brs[i]+'"'+(brs[i]===S.eCard.br?' selected':'')+'>'+brs[i]+'</option>';
+      h+='</select></div>';
+      
+      h+='<div class="br" style="margin-bottom:12px">';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Cierre (Ej: 24)</label><input type="number" id="ec-cierre" value="'+esc(S.eCard.dCierre)+'" min="1" max="31"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Venc. (Ej: 4)</label><input type="number" id="ec-venc" value="'+esc(S.eCard.dVenc)+'" min="1" max="31"></div>';
+      h+='</div>';
+      
+      if(d.mbs && (d.mbs||[]).length >= 2){
+          h+='<div class="ig"><label class="il">Titular de la Tarjeta</label><div class="tr" style="flex-wrap:wrap">';
+          var isHogar = (S.eCard.p === "Hogar");
+          h+='<button class="tg" style="'+(isHogar?'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)':'background:var(--card);border-color:var(--border);color:var(--text)')+'" onclick="S.eCard.p=\'Hogar\';render()">Hogar (Conjunta)</button>';
+          for(var i=0;i<(d.mbs||[]).length;i++){
+              var nm = (d.mbs||[])[i].n;
+              var pcol = PCOLORS[i % PCOLORS.length];
+              var isSel = (S.eCard.p===nm);
+              var bg = isSel ? pcol.b : 'var(--card)';
+              var bd = isSel ? pcol.c : 'var(--border)';
+              var tc = isSel ? pcol.c : 'var(--text)';
+              h+='<button class="tg" style="background:'+bg+';border-color:'+bd+';color:'+tc+'" onclick="S.eCard.p=\''+nm+'\';render()">'+nm+'</button>';
+          }
+          h+='</div></div>';
+      }
+
+      h+='<div class="br"><button class="bp" onclick="saveEditCard()">Guardar</button><button class="bs" onclick="SS({showEditCard:0})">Cancelar</button></div>';
       h+='</div></div>';
   }
 
