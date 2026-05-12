@@ -224,7 +224,11 @@ function render(){
                   selectHtml = ' <span style="font-size:10px;background:var(--sol-bg);color:var(--sol);padding:2px 6px;border-radius:10px;vertical-align:middle;margin-left:6px">'+(card.p||'Hogar')+'</span>';
               }
 
-              h+='<div class="cd"><div class="cbh" style="align-items:center"><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+')'+selectHtml+'</span><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
+              h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
+              h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+')'+selectHtml+'</span>';
+              if(card.dCierre || card.dVenc) h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Cierre: Día '+ (card.dCierre||'-') +' &middot; Vence: Día '+ (card.dVenc||'-') +'</div>';
+              h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
+
               if(acts.length===0){
                   h+='<div class="es" style="padding:10px">Sin consumos para este mes</div>';
               }else{
@@ -589,6 +593,10 @@ function render(){
       h+='<div class="ct" style="margin-bottom:16px">Agregar Nueva Tarjeta</div>';
       h+='<div class="ig"><label class="il">Banco (Ej: Santander, Galicia, BBVA)</label><input type="text" id="nc-b" value="'+esc(S.nCard.b)+'" placeholder="Banco"></div>';
       h+='<div class="ig"><label class="il">Marca de la Tarjeta</label><select id="nc-br">';
+      h+='<div class="br" style="margin-bottom:12px">';
+      h+='<div class="ig"><label class="il">Día de Cierre (Ej: 24)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="24"></div>';
+      h+='<div class="ig"><label class="il">Día de Venc. (Ej: 4)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="4"></div>';
+      h+='</div>';
       var brs=["Visa","Mastercard","American Express","Cabal","Naranja","Otra"];
       for(var i=0;i<brs.length;i++)h+='<option value="'+brs[i]+'"'+(brs[i]===S.nCard.br?' selected':'')+'>'+brs[i]+'</option>';
       h+='</select></div>';
@@ -637,25 +645,27 @@ function render(){
       h+='</div></div>';
 
       if(S.nCCTx.cur==="USD"){
+        h+='<div class="ig"><label class="il">¿Cómo vas a pagar este consumo?</label><div class="tr">';
+        h+='<button class="tg" style="'+(S.nCCTx.payM==="ARS"?'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)':'')+'" onclick="S.nCCTx.payM=\'ARS\';calcUsdToArs();render()">En Pesos</button>';
+        h+='<button class="tg" style="'+(S.nCCTx.payM==="USD"?'background:var(--green-bg);border-color:var(--green);color:var(--green)':'')+'" onclick="S.nCCTx.payM=\'USD\';calcUsdToArs();render()">En Dólares</button>';
+        h+='</div></div>';
+
         h+='<div class="ig"><label class="il">Monto en USD</label><input type="number" id="nx-musd" value="'+(S.nCCTx.mUsd||'')+'" placeholder="0.00" step="0.01" oninput="calcUsdToArs()"></div>';
-        // Show conversion
-        var dolarRate = DOLAR.tarjeta || DOLAR.oficial || 0;
-        var impLabel = "Dolar tarjeta (oficial + "+DOLAR_IMP_PCT+"% Ganancias)";
-        if(DOLAR.tarjeta > 0) impLabel = "Dolar tarjeta";
+        
+        var rateInfo = S.nCCTx.payM === "USD" ? (DOLAR.oficial||0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
+        var impLabel = S.nCCTx.payM === "USD" ? "Dólar Oficial (Sin impuestos)" : "Dólar Tarjeta";
+        
         h+='<div class="cd" style="background:var(--green-bg);padding:10px;margin-bottom:12px">';
-        if(dolarRate > 0){
-          h+='<div style="font-size:11px;color:var(--text3)">'+impLabel+': <strong>'+fmt(dolarRate)+'</strong>';
-          if(DOLAR.ts) h+=' <span style="font-size:10px">('+DOLAR.ts+')</span>';
-          h+='</div>';
+        if(rateInfo > 0){
+          h+='<div style="font-size:11px;color:var(--text3)">Aplicando '+impLabel+': <strong>'+fmt(rateInfo)+'</strong></div>';
           var usdVal = parseFloat(S.nCCTx.mUsd) || 0;
-          var arsEquiv = Math.round(usdVal * dolarRate);
+          var arsEquiv = Math.round(usdVal * rateInfo);
           h+='<div style="font-size:16px;font-weight:700;color:var(--green);margin-top:4px" id="usd-equiv">Equiv: '+fmt(arsEquiv)+'</div>';
         }else{
-          h+='<div style="font-size:11px;color:var(--red)">No se pudo obtener cotizacion. ';
-          h+='<button style="background:none;border:none;color:var(--sol);font-size:11px;cursor:pointer;text-decoration:underline" onclick="fetchDolar()">Reintentar</button></div>';
+          h+='<div style="font-size:11px;color:var(--red)">Cotización no disponible. <button style="background:none;border:none;color:var(--sol);font-size:11px;cursor:pointer;text-decoration:underline" onclick="fetchDolar()">Reintentar</button></div>';
         }
         h+='</div>';
-        h+='<div class="ig"><label class="il">Monto Total en ARS (calculado)</label><input type="number" id="nx-m" value="'+(S.nCCTx.m||'')+'" placeholder="0"></div>';
+        h+='<div class="ig"><label class="il">Monto Total en ARS (Equivalencia)</label><input type="number" id="nx-m" value="'+(S.nCCTx.m||'')+'" placeholder="0"></div>';
       }else{
         h+='<div class="ig"><label class="il">Monto Total de la Compra</label><input type="number" id="nx-m" value="'+(S.nCCTx.m||'')+'" placeholder="0"></div>';
       }

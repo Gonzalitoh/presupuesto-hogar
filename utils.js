@@ -7,7 +7,7 @@ function cic(c){return CICONS[c]||"\uD83D\uDCCB"}
 function fmtCat(c){
   var idx=c.indexOf("(");
   if(idx===-1) return esc(c);
-  return esc(c.substring(0,idx))+'<span style="font-size:0.6em;color:var(--text3);font-weight:400">'+esc(c.substring(idx))+'</span>';
+  return esc(c.substring(0,idx))+'<span style="font-size:0.85em;color:var(--text3);font-weight:400">'+esc(c.substring(idx))+'</span>';
 }
 function catSelectOpts(selId, selVal){
   var h='<select id="'+selId+'" style="color:'+(selVal?'var(--text)':'var(--text3)')+'" onchange="this.style.color=\'var(--text)\'">';

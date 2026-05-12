@@ -103,12 +103,14 @@ function saveCfg(){
 function addCard(){
     var b = document.getElementById("nc-b").value;
     var br = document.getElementById("nc-br").value;
+    var dCierre = document.getElementById("nc-cierre").value;
+    var dVenc = document.getElementById("nc-venc").value;
     if(!b) { showT("Falta completar el Banco"); return; }
     
     var p = S.nCard.p || ((S.data.mbs||[]).length > 0 ? (S.data.mbs||[])[0].n : "");
     
-    S.ccData.cards.push({id:Date.now(), b:b, br:br, p:p});
-    saveCC(); S.showNewCard=false; S.nCard={b:"", br:"Visa", p:""}; render();
+    S.ccData.cards.push({id:Date.now(), b:b, br:br, p:p, dCierre:dCierre, dVenc:dVenc});
+    saveCC(); S.showNewCard=false; S.nCard={b:"", br:"Visa", p:"", dCierre:"", dVenc:""}; render();
 }
 function delCard(id){
     var nc = []; for(var i=0; i<S.ccData.cards.length; i++){ if(S.ccData.cards[i].id!==id) nc.push(S.ccData.cards[i]); }
@@ -159,13 +161,14 @@ function calcUsdToArs(){
   if(!el) return;
   S.nCCTx.mUsd = el.value;
   var usd = parseFloat(el.value) || 0;
-  var rate = DOLAR.tarjeta || DOLAR.oficial || 0;
+  
+  // Si paga en USD usa el Oficial, si paga en ARS usa el Tarjeta
+  var rate = S.nCCTx.payM === "USD" ? (DOLAR.oficial || 0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
+  
   if(rate > 0){
     S.nCCTx.m = Math.round(usd * rate);
-    // Update the ARS field directly without re-rendering
     var arsEl = document.getElementById("nx-m");
     if(arsEl) arsEl.value = S.nCCTx.m;
-    // Update the equivalence display
     var eqEl = document.getElementById("usd-equiv");
     if(eqEl) eqEl.textContent = "Equiv: " + fmt(S.nCCTx.m);
   }
