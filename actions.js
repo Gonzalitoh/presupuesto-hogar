@@ -128,14 +128,14 @@ function addCCTx(){
     var desc = dEl ? dEl.value.trim() : "";
     var monto = mEl ? parseFloat(mEl.value) : 0;
     var cuotas = qEl ? (parseInt(qEl.value) || 1) : 1;
-    var cat = cEl ? cEl.value : CV[0];
+    var cat = cEl ? cEl.value : "";
     
     // In USD mode, use the calculated ARS value from state if input is empty
     if(S.nCCTx.cur === "USD" && (!monto || monto === 0) && S.nCCTx.m){
         monto = parseFloat(S.nCCTx.m) || 0;
     }
     
-    if(!desc || !monto || !cid) { showT("Faltan datos"); return; }
+    if(!desc || !monto || !cid || !cat) { showT("Faltan datos"); return; }
     
     var tx = {id:Date.now(), cId:cid, d:desc, m:monto, q:cuotas, c:cat, sm:S.month, sy:S.year, t:S.nCCTx.t || "Hogar"};
     
@@ -145,7 +145,7 @@ function addCCTx(){
       tx.dolarRate = DOLAR.tarjeta || DOLAR.oficial || 0;
     }
     S.ccData.txs.push(tx);
-    saveCC(); S.showNewCCTx=false; S.nCCTx={cId:"", d:"", m:"", q:1, c:CV[0], cur:"ARS", mUsd:"", t:"Hogar"}; render();
+    saveCC(); S.showNewCCTx=false; S.nCCTx={cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar"}; render();
 }
 
 function setCCCur(cur){
@@ -243,7 +243,7 @@ function delG(id){
     S.data.gR = ng;
     saveD();render();
 }
-function addS(){var d=document.getElementById("ns-d").value;var m=parseFloat(document.getElementById("ns-m").value);var c=document.getElementById("ns-c").value;if(!d||!m||!c){showT("Faltan datos");return;}if(!S.data.gC)S.data.gC=[];S.data.gC.push({id:Date.now(),d:d,m:m,c:c,p:S.nS.p,f:new Date().toISOString().split("T")[0]});saveD();S.showNewShared=false;S.nS={d:"",m:"",c:CV[0],p:""};render()}
+function addS(){var d=document.getElementById("ns-d").value;var m=parseFloat(document.getElementById("ns-m").value);var c=document.getElementById("ns-c").value;if(!d||!m||!c){showT("Faltan datos");return;}if(!S.data.gC)S.data.gC=[];S.data.gC.push({id:Date.now(),d:d,m:m,c:c,p:S.nS.p,f:new Date().toISOString().split("T")[0]});saveD();S.showNewShared=false;S.nS={d:"",m:"",c:"",p:""};render()}
 function delS(id){
     var ng = []; for(var i=0; i<S.data.gC.length; i++){ if(S.data.gC[i].id!==id) ng.push(S.data.gC[i]); }
     S.data.gC = ng;

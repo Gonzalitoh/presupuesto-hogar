@@ -3,9 +3,9 @@ var S={
     view:"dashboard", data:null, ccData:{cards:[], txs:[]}, toast:"",
     showConfig:false, showNewGasto:false, showNewShared:false, showCB:false, showReset:false, showResetFijos:false, showMP:false, showNewCard:false, showNewCCTx:false, showDelCard:0, showSync:false, showEditG:0, showEditCCTx:0,
     mpY:new Date().getFullYear(), gastoFilter:"",
-    cfgD:{}, cbD:{}, nG:{d:"",m:"",c:CV[0],f:"",owner:"Hogar"}, nS:{d:"",m:"",c:CV[0],p:""}, nCard:{b:"",br:"Visa",p:""}, nCCTx:{cId:"",d:"",m:"",q:1,c:CV[0],cur:"ARS",mUsd:"",t:"Hogar"},
-    eG:{id:0,d:"",m:"",c:CV[0],f:"",owner:"Hogar"},
-    eCCTx:{id:0,d:"",m:"",q:1,c:CV[0],t:"Hogar",fixed:false}
+    cfgD:{}, cbD:{}, nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:""}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar"},
+    eG:{id:0,d:"",m:"",c:"",f:"",owner:"Hogar"},
+    eCCTx:{id:0,d:"",m:"",q:1,c:"",t:"Hogar",fixed:false}
 };
 
 function mkD(m,y){return{month:m,year:y,mbs:[],pG:0,pA:0,gF:CF.map(function(c){return{n:c,m:0}}),gR:[],gC:[],pC:{},notas:""}}

@@ -10,7 +10,7 @@ function fmtCat(c){
   return esc(c.substring(0,idx))+'<span style="font-size:0.6em;color:var(--text3);font-weight:400">'+esc(c.substring(idx))+'</span>';
 }
 function catSelectOpts(selId, selVal){
-  var h='<select id="'+selId+'" style="color:'+(selVal?'var(--text)':'var(--text3)')+'">';
+  var h='<select id="'+selId+'" style="color:'+(selVal?'var(--text)':'var(--text3)')+'" onchange="this.style.color=\'var(--text)\'">';
   h+='<option value=""'+(selVal?'':' selected')+' disabled style="color:var(--text3)">Seleccione una categor&#237;a...</option>';
   for(var i=0;i<CV.length;i++){h+='<option value="'+CV[i]+'"'+(CV[i]===selVal?' selected':'')+'>'+CV[i]+'</option>';}
   h+='</select>';

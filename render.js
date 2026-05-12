@@ -711,9 +711,7 @@ function render(){
     h+='<div class="ct" style="margin-bottom:16px">Nuevo gasto compartido</div>';
     h+='<div class="ig"><label class="il">Descripcion</label><input type="text" id="ns-d" value="'+esc(S.nS.d)+'" placeholder="Ej: Cena aniversario"></div>';
     h+='<div class="ig"><label class="il">Monto</label><input type="number" id="ns-m" value="'+S.nS.m+'" placeholder="0"></div>';
-    h+='<div class="ig"><label class="il">Categoria</label><select id="ns-c">';
-    for(var i=0;i<CV.length;i++)h+='<option value="'+CV[i]+'"'+(CV[i]===S.nS.c?' selected':'')+'>'+CV[i]+'</option>';
-    h+='</select></div>';
+    h+='<div class="ig"><label class="il">Categoria</label>'+catSelectOpts("ns-c", S.nS.c)+'</div>';
     
     h+='<div class="ig"><label class="il">Pagado por</label><div class="tr" style="flex-wrap:wrap">';
     for(var i=0;i<(d.mbs||[]).length;i++){
