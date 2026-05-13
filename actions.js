@@ -103,6 +103,15 @@ function saveCfg(){
 function updateCardDates(cId, field, val){
     if(!S.data.cDates) S.data.cDates = {};
     if(!S.data.cDates[cId]) S.data.cDates[cId] = {};
+    
+    // Validación blindada de fechas
+    if(val !== ""){
+        var num = parseInt(val);
+        if(field === 'm' && (num < 1 || num > 12)) val = "";
+        else if((field === 'c' || field === 'v') && (num < 1 || num > 31)) val = "";
+        else val = num.toString();
+    }
+    
     S.data.cDates[cId][field] = val;
     saveD();
 }

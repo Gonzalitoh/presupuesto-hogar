@@ -229,15 +229,22 @@ function render(){
               var cOverride = (d.cDates && d.cDates[card.id]) ? d.cDates[card.id] : {};
               var currCierre = cOverride.c !== undefined && cOverride.c !== "" ? cOverride.c : (card.dCierre||'');
               var currVenc = cOverride.v !== undefined && cOverride.v !== "" ? cOverride.v : (card.dVenc||'');
+              
+              var currVencM = cOverride.m !== undefined && cOverride.m !== "" ? cOverride.m : "";
+              if(currVencM === "" && currVenc !== "") {
+                  var offset = card.mVenc === "0" ? 1 : 2; 
+                  var calcM = S.month + offset;
+                  if(calcM > 12) calcM -= 12;
+                  currVencM = calcM;
+              }
 
-              var vMesStr = card.mVenc === "0" ? " (mismo mes)" : " (mes sig.)";
               h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
               h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta (Base)">&#9998;</button>'+selectHtml+'</span>';
               
               h+='<div style="font-size:11px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:6px">';
-              h+='Cierre: <input type="number" style="width:46px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currCierre)+'" onblur="updateCardDates('+card.id+',\'c\',this.value)" placeholder="-">';
-              h+=' &middot; Vence: <input type="number" style="width:46px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVenc)+'" onblur="updateCardDates('+card.id+',\'v\',this.value)" placeholder="-">';
-              h+= '<span style="color:var(--text3)">' + vMesStr + '</span>';
+              h+='Cierre: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currCierre)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'c\',this.value)" placeholder="-">';
+              h+=' &middot; Vence el: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVenc)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'v\',this.value)" placeholder="Día">';
+              h+=' / <input type="number" min="1" max="12" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVencM)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>12)this.value=12;} updateCardDates('+card.id+',\'m\',this.value)" placeholder="Mes">';
               h+='</div>';
               
               h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
@@ -617,8 +624,8 @@ function render(){
       h+='</select></div>';
       
       h+='<div class="br" style="margin-bottom:12px">';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="Ej: 24"></div>';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="Ej: 4"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;}" placeholder="Ej: 24"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;}" placeholder="Ej: 4"></div>';
       h+='<div class="ig" style="margin-bottom:0"><label class="il">Mes Vto.</label><select id="nc-mvenc"><option value="0"'+(S.nCard.mVenc==="0"?' selected':'')+'>Mismo mes</option><option value="1"'+(S.nCard.mVenc==="1"?' selected':'')+'>Mes sig.</option></select></div>';
       h+='</div>';
 
@@ -868,8 +875,8 @@ function render(){
       h+='</select></div>';
       
       h+='<div class="br" style="margin-bottom:12px">';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="ec-cierre" value="'+esc(S.eCard.dCierre)+'" min="1" max="31"></div>';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="ec-venc" value="'+esc(S.eCard.dVenc)+'" min="1" max="31"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="ec-cierre" value="'+esc(S.eCard.dCierre)+'" min="1" max="31" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;}"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="ec-venc" value="'+esc(S.eCard.dVenc)+'" min="1" max="31" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;}"></div>';
       h+='<div class="ig" style="margin-bottom:0"><label class="il">Mes Vto.</label><select id="ec-mvenc"><option value="0"'+(S.eCard.mVenc==="0"?' selected':'')+'>Mismo mes</option><option value="1"'+(S.eCard.mVenc==="1"?' selected':'')+'>Mes sig.</option></select></div>';
       h+='</div>';
       
