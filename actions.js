@@ -153,30 +153,98 @@ function addCCTx(){
     var mEl = document.getElementById("nx-m");
     var qEl = document.getElementById("nx-q");
     var cEl = document.getElementById("nx-c");
+    var fdEl = document.getElementById("nx-fd");
+    var currQEl = document.getElementById("nx-currq");
     
     var cid = cidEl ? parseInt(cidEl.value) : 0;
     var desc = dEl ? dEl.value.trim() : "";
     var monto = mEl ? parseFloat(mEl.value) : 0;
     var cuotas = qEl ? (parseInt(qEl.value) || 1) : 1;
     var cat = cEl ? cEl.value : "";
+    var fechaCompra = fdEl ? fdEl.value : "";
+    var currQInput = currQEl ? (parseInt(currQEl.value) || 0) : 0;
     
-    // In USD mode, use the calculated ARS value from state if input is empty
     if(S.nCCTx.cur === "USD" && (!monto || monto === 0) && S.nCCTx.m){
         monto = parseFloat(S.nCCTx.m) || 0;
     }
     
     if(!desc || !monto || !cid || !cat) { showT("Faltan datos"); return; }
     
-    var tx = {id:Date.now(), cId:cid, d:desc, m:monto, q:cuotas, c:cat, sm:S.month, sy:S.year, t:S.nCCTx.t || "Hogar"};
+    // Find the card to get dCierre
+    var card = null;
+    for(var k=0; k<S.ccData.cards.length; k++){
+        if(S.ccData.cards[k].id === cid){ card = S.ccData.cards[k]; break; }
+    }
+    
+    // Calculate absStart (the month where cuota 1 impacts)
+    var absStart;
+    var purchaseMonth = S.month;
+    var purchaseYear = S.year;
+    
+    if(fechaCompra){
+        // Parse the purchase date
+        var parts = fechaCompra.split("-");
+        purchaseYear = parseInt(parts[0]);
+        purchaseMonth = parseInt(parts[1]) - 1; // 0-indexed
+        var purchaseDay = parseInt(parts[2]);
+        
+        // Get cierre day from card
+        var dCierre = card && card.dCierre ? parseInt(card.dCierre) : 0;
+        
+        if(dCierre > 0){
+            // If purchase is on or before cierre day: payment starts NEXT month
+            // If purchase is after cierre day: payment starts 2 months later
+            if(purchaseDay <= dCierre){
+                // Before/on cierre -> cuota 1 next month
+                absStart = purchaseYear * 12 + purchaseMonth + 1;
+            } else {
+                // After cierre -> cuota 1 two months later
+                absStart = purchaseYear * 12 + purchaseMonth + 2;
+            }
+        } else {
+            // No cierre configured: default to next month
+            absStart = purchaseYear * 12 + purchaseMonth + 1;
+        }
+    } else {
+        // No date: default to next month from current
+        absStart = S.year * 12 + S.month + 1;
+    }
+    
+    // Retroactive: if user says "I'm on cuota X", shift absStart back
+    if(currQInput > 1 && currQInput <= cuotas){
+        absStart = absStart - (currQInput - 1);
+    }
+    
+    // Store sm/sy from absStart for backward compatibility
+    var smCalc = absStart % 12;
+    var syCalc = Math.floor(absStart / 12);
+    
+    var tx = {
+        id: Date.now(),
+        cId: cid,
+        d: desc,
+        m: monto,
+        q: cuotas,
+        c: cat,
+        sm: smCalc,
+        sy: syCalc,
+        absStart: absStart,
+        t: S.nCCTx.t || "Hogar",
+        fd: fechaCompra || ""
+    };
     
     if(S.nCCTx.cur === "USD" && S.nCCTx.mUsd){
-      tx.cur = "USD";
-      tx.mUsd = parseFloat(S.nCCTx.mUsd) || 0;
-      tx.payM = S.nCCTx.payM || "ARS";
-      tx.dolarRate = tx.payM === "USD" ? (DOLAR.oficial || 0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
+        tx.cur = "USD";
+        tx.mUsd = parseFloat(S.nCCTx.mUsd) || 0;
+        tx.payM = S.nCCTx.payM || "ARS";
+        tx.dolarRate = tx.payM === "USD" ? (DOLAR.oficial || 0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
     }
+    
     S.ccData.txs.push(tx);
-    saveCC(); S.showNewCCTx=false; S.nCCTx={cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar", payM:"ARS"}; render();
+    saveCC();
+    S.showNewCCTx = false;
+    S.nCCTx = {cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar", payM:"ARS"};
+    render();
 }
 
 function setCCCur(cur){

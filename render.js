@@ -81,12 +81,14 @@ function render(){
       h+='<span style="font-size:12px;color:var(--sol);font-weight:700">'+fmt(c.tT)+'/mes</span></div>';
       for(var i=0; i<c.ccActive.length; i++){
         var a = c.ccActive[i];
-        var isLast = (a.currQ === a.tx.q);
+        var isLast = (!a.tx.fixed && a.currQ === a.tx.q && a.tx.q > 1);
+        var isFixed = !!a.tx.fixed;
         var labelColor = isLast ? 'var(--green)' : 'var(--text2)';
-        var icon = isLast ? '&#10003;' : '&#128179;';
+        var icon = isLast ? '&#10003;' : (isFixed ? '&#128260;' : '&#128179;');
         var extra = isLast ? ' <strong style="color:var(--green)">(&#250;ltima)</strong>' : '';
+        var qLabel = isFixed ? '(Fijo)' : '('+a.currQ+'/'+a.tx.q+')';
         h+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:'+labelColor+';margin-top:3px">';
-        h+='<span>'+icon+' '+esc(a.tx.d)+' ('+a.currQ+'/'+a.tx.q+')'+extra+'</span>';
+        h+='<span>'+icon+' '+esc(a.tx.d)+' '+qLabel+extra+'</span>';
         h+='<span style="font-weight:600">'+fmt(a.amt)+'</span></div>';
       }
       h+='</div>';
@@ -250,7 +252,13 @@ function render(){
                       
                       var tTag = (a.tx.t === "Personal") ? '<span style="font-size:9px;background:#e5e7eb;color:#4b5563;padding:1px 4px;border-radius:4px;margin-left:4px;font-weight:600">PERSONAL</span>' : '<span style="font-size:9px;background:var(--sol-bg);color:var(--sol);padding:1px 4px;border-radius:4px;margin-left:4px;font-weight:600">HOGAR</span>';
                       
-                      h+='<div class="fr"><div class="fn"><div style="font-weight:600">'+esc(a.tx.d)+usdInfo+tTag+' '+(a.currQ===a.tx.q?'<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:600">ULTIMA</span> ':'')+' <span style="font-size:11px;color:var(--text3);font-weight:400">'+(a.tx.q>1?'(Cuota '+a.currQ+'/'+a.tx.q+')':'(1 pago)')+'</span></div><div class="gm">'+a.tx.c+'</div></div>';
+                      var cuotaLabel = '';
+                      if(a.tx.fixed){ cuotaLabel = '(Fijo mensual)'; }
+                      else if(a.tx.q > 1){ cuotaLabel = '(Cuota '+a.currQ+'/'+a.tx.q+')'; }
+                      else { cuotaLabel = '(1 pago)'; }
+                      var dateTag = a.tx.fd ? ' <span style="font-size:9px;color:var(--text3)">'+a.tx.fd+'</span>' : '';
+                      var lastTag2 = (!a.tx.fixed && a.currQ === a.tx.q && a.tx.q > 1) ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:600">ULTIMA</span> ' : '';
+                      h+='<div class="fr"><div class="fn"><div style="font-weight:600">'+esc(a.tx.d)+usdInfo+tTag+' '+lastTag2+' <span style="font-size:11px;color:var(--text3);font-weight:400">'+cuotaLabel+'</span>'+dateTag+'</div><div class="gm">'+a.tx.c+'</div></div>';
                       h+='<div class="fv">'+fmt(a.amt)+'</div>';
                       h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditCCTx('+a.tx.id+')" title="Editar">&#9998;</button>';
                       h+='<button class="gx" onclick="delCCTx('+a.tx.id+')">&times;</button></div>';
@@ -672,8 +680,15 @@ function render(){
       }
 
       h+='<div class="ig"><label class="il">Cantidad de Cuotas</label><input type="number" id="nx-q" value="'+S.nCCTx.q+'" min="1" placeholder="1"></div>';
+      h+='<div class="ig"><label class="il">Fecha de compra <span style="font-size:0.85em;color:var(--text3)">(para calcular en qu&#233; mes impacta)</span></label><input type="date" id="nx-fd" value="'+(S.nCCTx.fd||'')+'"></div>';
+      h+='<div class="ig"><label class="il">&#191;Ya pagaste cuotas? <span style="font-size:0.85em;color:var(--text3)">(si es un gasto que ya ven&#237;as pagando)</span></label><input type="number" id="nx-currq" value="" min="0" placeholder="0 = es nuevo, 2 = voy por la 2da cuota"></div>';
       h+='<div class="ig"><label class="il">Categoria</label>'+catSelectOpts("nx-c", S.nCCTx.c)+'</div>';
-      h+='<p style="font-size:11px;color:var(--text2);margin-bottom:12px">El consumo comenzar&#225; a verse reflejado a partir de este mes ('+MO[S.month]+').</p>';
+      // Find card cierre for info display
+      var infoCard = null;
+      for(var ci=0;ci<S.ccData.cards.length;ci++){if(S.ccData.cards[ci].id===S.nCCTx.cId){infoCard=S.ccData.cards[ci];break}}
+      if(infoCard && infoCard.dCierre){
+        h+='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px">&#128197; Cierre d&#237;a '+infoCard.dCierre+(infoCard.dVenc?' &middot; Vto d&#237;a '+infoCard.dVenc:'')+'<br>Los consumos antes del cierre se pagan el mes siguiente.</div>';
+      }
       h+='<div class="br"><button class="bp" onclick="addCCTx()">Agregar</button><button class="bs" onclick="SS({showNewCCTx:false})">Cancelar</button></div>';
       h+='</div></div>';
   }

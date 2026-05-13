@@ -76,31 +76,47 @@ function doCalc(d){
       var absCurr = d.year * 12 + d.month;
       for(var i=0; i<S.ccData.txs.length; i++){
           var tx = S.ccData.txs[i];
-          var absStart = tx.sy * 12 + tx.sm;
+          
+          // Calculate effective start month considering closing date
+          var absStart;
+          if(tx.absStart !== undefined){
+              // Pre-calculated by addCCTx (retroactive or date-aware)
+              absStart = tx.absStart;
+          } else {
+              absStart = tx.sy * 12 + tx.sm;
+          }
+          
           var diff = absCurr - absStart;
-          if(diff >= 0 && diff < tx.q){
-              var amtPerQ = tx.m / tx.q;
+          
+          // For fixed expenses, always show (q=9999 means perpetual)
+          var effectiveQ = tx.fixed ? 9999 : (tx.q || 1);
+          
+          if(diff >= 0 && diff < effectiveQ){
+              var amtPerQ = tx.fixed ? tx.m : (tx.m / tx.q);
               
               var card = null;
               for(var k=0; k<S.ccData.cards.length; k++){ if(S.ccData.cards[k].id === tx.cId){ card = S.ccData.cards[k]; break; } }
               var owner = card ? (card.p || "Hogar") : "Hogar";
 
+              var currQ = diff + 1;
+              var displayQ = tx.fixed ? 0 : currQ; // 0 means fixed, no cuota number
+
               if(owner !== "Hogar"){
                   cardBillByPerson[owner] = (cardBillByPerson[owner]||0) + amtPerQ;
                   
                   if (tx.t === "Personal") {
-                      ccActivePersonal.push({ tx: tx, currQ: diff + 1, amt: amtPerQ });
+                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
                   } else {
                       ccTotalByPerson[owner] = (ccTotalByPerson[owner]||0) + amtPerQ;
                       tT += amtPerQ;
-                      ccActive.push({ tx: tx, currQ: diff + 1, amt: amtPerQ });
+                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
                   }
               } else {
                   tT += amtPerQ;
                   if (tx.t === "Personal") {
-                      ccActivePersonal.push({ tx: tx, currQ: diff + 1, amt: amtPerQ });
+                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
                   } else {
-                      ccActive.push({ tx: tx, currQ: diff + 1, amt: amtPerQ });
+                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
                   }
               }
           }
