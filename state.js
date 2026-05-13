@@ -1,11 +1,12 @@
 var S={
     month:new Date().getMonth(), year:new Date().getFullYear(),
     view:"dashboard", data:null, ccData:{cards:[], txs:[]}, toast:"",
-    showConfig:false, showNewGasto:false, showNewShared:false, showCB:false, showReset:false, showResetFijos:false, showMP:false, showNewCard:false, showNewCCTx:false, showDelCard:0, showSync:false, showEditG:0, showEditCCTx:0,
+    showConfig:false, showNewGasto:false, showNewShared:false, showCB:false, showReset:false, showResetFijos:false, showMP:false, showNewCard:false, showNewCCTx:false, showDelCard:0, showSync:false, showEditG:0, showEditCCTx:0, showEditCard:0,
     mpY:new Date().getFullYear(), gastoFilter:"",
-    cfgD:{}, cbD:{}, nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:"",dCierre:"",dVenc:""}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar",payM:"ARS"},
+    cfgD:{}, cbD:{}, nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:"",dCierre:"",dVenc:""}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar",payM:"ARS",fixed:false},
     eG:{id:0,d:"",m:"",c:"",f:"",owner:"Hogar"},
-    eCCTx:{id:0,d:"",m:"",q:1,c:"",t:"Hogar",fixed:false}
+    eCCTx:{id:0,cId:"",d:"",m:"",q:1,c:"",t:"Hogar",fixed:false,fd:"",currq:""},
+    eCard:{id:0,b:"",br:"Visa",p:"",dCierre:"",dVenc:""}
 };
 
 function mkD(m,y){return{month:m,year:y,mbs:[],pG:0,pA:0,gF:CF.map(function(c){return{n:c,m:0}}),gR:[],gC:[],pC:{},notas:""}}
@@ -77,10 +78,8 @@ function doCalc(d){
       for(var i=0; i<S.ccData.txs.length; i++){
           var tx = S.ccData.txs[i];
           
-          // Calculate effective start month considering closing date
           var absStart;
           if(tx.absStart !== undefined){
-              // Pre-calculated by addCCTx (retroactive or date-aware)
               absStart = tx.absStart;
           } else {
               absStart = tx.sy * 12 + tx.sm;
@@ -88,7 +87,6 @@ function doCalc(d){
           
           var diff = absCurr - absStart;
           
-          // For fixed expenses, always show (q=9999 means perpetual)
           var effectiveQ = tx.fixed ? 9999 : (tx.q || 1);
           
           if(diff >= 0 && diff < effectiveQ){
@@ -99,7 +97,7 @@ function doCalc(d){
               var owner = card ? (card.p || "Hogar") : "Hogar";
 
               var currQ = diff + 1;
-              var displayQ = tx.fixed ? 0 : currQ; // 0 means fixed, no cuota number
+              var displayQ = tx.fixed ? 0 : currQ; 
 
               if(owner !== "Hogar"){
                   cardBillByPerson[owner] = (cardBillByPerson[owner]||0) + amtPerQ;

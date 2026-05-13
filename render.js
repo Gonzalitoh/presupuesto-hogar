@@ -679,11 +679,19 @@ function render(){
         h+='<div class="ig"><label class="il">Monto Total de la Compra</label><input type="number" id="nx-m" value="'+(S.nCCTx.m||'')+'" placeholder="0"></div>';
       }
 
-      h+='<div class="ig"><label class="il">Cantidad de Cuotas</label><input type="number" id="nx-q" value="'+S.nCCTx.q+'" min="1" placeholder="1"></div>';
+      h+='<div class="ig"><label class="il">Modalidad del Consumo</label><div class="tr">';
+      h+='<button class="tg" style="'+(S.nCCTx.fixed?'':'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)')+'" onclick="syncNewCCTx();S.nCCTx.fixed=false;render()">En Cuotas / 1 Pago</button>';
+      h+='<button class="tg" style="'+(S.nCCTx.fixed?'background:var(--yellow-bg);border-color:var(--yellow);color:var(--yellow)':'')+'" onclick="syncNewCCTx();S.nCCTx.fixed=true;render()">Fijo Mensual</button>';
+      h+='</div></div>';
+
+      if(!S.nCCTx.fixed){
+          h+='<div class="ig"><label class="il">Cantidad de Cuotas</label><input type="number" id="nx-q" value="'+S.nCCTx.q+'" min="1" placeholder="1"></div>';
+      }
+      
       h+='<div class="ig"><label class="il">Fecha de compra <span style="font-size:0.85em;color:var(--text3)">(para calcular en qu&#233; mes impacta)</span></label><input type="date" id="nx-fd" value="'+(S.nCCTx.fd||'')+'"></div>';
       h+='<div class="ig"><label class="il">&#191;Ya pagaste cuotas? <span style="font-size:0.85em;color:var(--text3)">(si es un gasto que ya ven&#237;as pagando)</span></label><input type="number" id="nx-currq" value="" min="0" placeholder="0 = es nuevo, 2 = voy por la 2da cuota"></div>';
       h+='<div class="ig"><label class="il">Categoria</label>'+catSelectOpts("nx-c", S.nCCTx.c)+'</div>';
-      // Find card cierre for info display
+      
       var infoCard = null;
       for(var ci=0;ci<S.ccData.cards.length;ci++){if(S.ccData.cards[ci].id===S.nCCTx.cId){infoCard=S.ccData.cards[ci];break}}
       if(infoCard && infoCard.dCierre){
@@ -792,9 +800,17 @@ function render(){
     h+='<button class="tg" style="'+(S.eCCTx.fixed?'':'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)')+'" onclick="S.eCCTx.fixed=false;render()">En cuotas</button>';
     h+='<button class="tg" style="'+(S.eCCTx.fixed?'background:var(--yellow-bg);border-color:var(--yellow);color:var(--yellow)':'')+'" onclick="S.eCCTx.fixed=true;render()">Fijo mensual</button>';
     h+='</div></div>';
+    
     if(!S.eCCTx.fixed){
       h+='<div class="ig"><label class="il">Cuotas</label><input type="number" id="ex-q" value="'+S.eCCTx.q+'" min="1"></div>';
     }
+    
+    h+='<div class="ig"><label class="il">Fecha de compra <span style="font-size:0.85em;color:var(--text3)">(opcional)</span></label><input type="date" id="ex-fd" value="'+(S.eCCTx.fd||'')+'"></div>';
+    
+    if(!S.eCCTx.fixed){
+        h+='<div class="ig"><label class="il">&#191;Qu&#233; cuota es en este mes? ('+MO[S.month]+') <span style="font-size:0.85em;color:var(--text3)">(Modificar solo para reajustar)</span></label><input type="number" id="ex-currq" value="'+(S.eCCTx.currq||'')+'" min="1" placeholder="Ej: 2"></div>';
+    }
+    
     h+='<div class="ig"><label class="il">Categoria</label>'+catSelectOpts("ex-c", S.eCCTx.c)+'</div>';
     h+='<div class="ig"><label class="il">Asignacion</label><div class="tr">';
     h+='<button class="tg" style="'+(S.eCCTx.t!=="Personal"?'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)':'')+'" onclick="S.eCCTx.t=\'Hogar\';render()">Hogar</button>';

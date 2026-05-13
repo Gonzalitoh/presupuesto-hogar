@@ -159,7 +159,7 @@ function addCCTx(){
     var cid = cidEl ? parseInt(cidEl.value) : 0;
     var desc = dEl ? dEl.value.trim() : "";
     var monto = mEl ? parseFloat(mEl.value) : 0;
-    var cuotas = qEl ? (parseInt(qEl.value) || 1) : 1;
+    var cuotas = S.nCCTx.fixed ? 1 : (qEl ? (parseInt(qEl.value) || 1) : 1);
     var cat = cEl ? cEl.value : "";
     var fechaCompra = fdEl ? fdEl.value : "";
     var currQInput = currQEl ? (parseInt(currQEl.value) || 0) : 0;
@@ -170,52 +170,40 @@ function addCCTx(){
     
     if(!desc || !monto || !cid || !cat) { showT("Faltan datos"); return; }
     
-    // Find the card to get dCierre
     var card = null;
     for(var k=0; k<S.ccData.cards.length; k++){
         if(S.ccData.cards[k].id === cid){ card = S.ccData.cards[k]; break; }
     }
     
-    // Calculate absStart (the month where cuota 1 impacts)
     var absStart;
     var purchaseMonth = S.month;
     var purchaseYear = S.year;
     
     if(fechaCompra){
-        // Parse the purchase date
         var parts = fechaCompra.split("-");
         purchaseYear = parseInt(parts[0]);
-        purchaseMonth = parseInt(parts[1]) - 1; // 0-indexed
+        purchaseMonth = parseInt(parts[1]) - 1; 
         var purchaseDay = parseInt(parts[2]);
         
-        // Get cierre day from card
         var dCierre = card && card.dCierre ? parseInt(card.dCierre) : 0;
         
         if(dCierre > 0){
-            // If purchase is on or before cierre day: payment starts NEXT month
-            // If purchase is after cierre day: payment starts 2 months later
             if(purchaseDay <= dCierre){
-                // Before/on cierre -> cuota 1 next month
                 absStart = purchaseYear * 12 + purchaseMonth + 1;
             } else {
-                // After cierre -> cuota 1 two months later
                 absStart = purchaseYear * 12 + purchaseMonth + 2;
             }
         } else {
-            // No cierre configured: default to next month
             absStart = purchaseYear * 12 + purchaseMonth + 1;
         }
     } else {
-        // No date: default to next month from current
         absStart = S.year * 12 + S.month + 1;
     }
     
-    // Retroactive: if user says "I'm on cuota X", shift absStart back
     if(currQInput > 1 && currQInput <= cuotas){
         absStart = absStart - (currQInput - 1);
     }
     
-    // Store sm/sy from absStart for backward compatibility
     var smCalc = absStart % 12;
     var syCalc = Math.floor(absStart / 12);
     
@@ -230,6 +218,7 @@ function addCCTx(){
         sy: syCalc,
         absStart: absStart,
         t: S.nCCTx.t || "Hogar",
+        fixed: S.nCCTx.fixed || false,
         fd: fechaCompra || ""
     };
     
@@ -243,7 +232,7 @@ function addCCTx(){
     S.ccData.txs.push(tx);
     saveCC();
     S.showNewCCTx = false;
-    S.nCCTx = {cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar", payM:"ARS"};
+    S.nCCTx = {cId:"", d:"", m:"", q:1, c:"", cur:"ARS", mUsd:"", t:"Hogar", payM:"ARS", fixed:false};
     render();
 }
 
@@ -259,7 +248,6 @@ function calcUsdToArs(){
   S.nCCTx.mUsd = el.value;
   var usd = parseFloat(el.value) || 0;
   
-  // Si paga en USD usa el Oficial, si paga en ARS usa el Tarjeta
   var rate = S.nCCTx.payM === "USD" ? (DOLAR.oficial || 0) : (DOLAR.tarjeta || DOLAR.oficial || 0);
   
   if(rate > 0){
@@ -275,26 +263,75 @@ function openEditCCTx(id){
     var tx = null;
     for(var i=0;i<S.ccData.txs.length;i++){if(S.ccData.txs[i].id===id){tx=S.ccData.txs[i];break}}
     if(!tx)return;
-    S.eCCTx = {id:tx.id, d:tx.d, m:tx.m, q:tx.q||1, c:tx.c, t:tx.t||"Hogar", fixed:!!tx.fixed};
+    
+    // Calculamos qué cuota está corriendo en el mes que estamos visualizando
+    var absCurr = S.year * 12 + S.month;
+    var absStart = tx.absStart !== undefined ? tx.absStart : (tx.sy * 12 + tx.sm);
+    var currQ = absCurr - absStart + 1;
+    if(currQ < 1) currQ = ""; 
+    
+    S.eCCTx = {id:tx.id, cId:tx.cId, d:tx.d, m:tx.m, q:tx.q||1, c:tx.c, t:tx.t||"Hogar", fixed:!!tx.fixed, fd:tx.fd||"", currq: currQ};
     S.showEditCCTx = id;
     render();
 }
+
 function saveEditCCTx(){
     var d = document.getElementById("ex-d").value;
     var m = parseFloat(document.getElementById("ex-m").value);
     var qEl = document.getElementById("ex-q");
     var q = S.eCCTx.fixed ? 1 : (qEl ? (parseInt(qEl.value)||1) : 1);
     var c = document.getElementById("ex-c").value;
+    var fdEl = document.getElementById("ex-fd");
+    var fechaCompra = fdEl ? fdEl.value : "";
+    var currQEl = document.getElementById("ex-currq");
+    var currQInput = currQEl ? parseInt(currQEl.value) : NaN;
+    
     if(!d||!m||!c){showT("Faltan datos");return;}
+    
     for(var i=0;i<S.ccData.txs.length;i++){
         if(S.ccData.txs[i].id===S.showEditCCTx){
-            S.ccData.txs[i].d=d; S.ccData.txs[i].m=m; S.ccData.txs[i].q=q; S.ccData.txs[i].c=c; S.ccData.txs[i].t=S.eCCTx.t;
-            S.ccData.txs[i].fixed = S.eCCTx.fixed ? true : false;
+            var tx = S.ccData.txs[i];
+            tx.d=d; tx.m=m; tx.q=q; tx.c=c; tx.t=S.eCCTx.t;
+            tx.fixed = S.eCCTx.fixed ? true : false;
+            tx.fd = fechaCompra;
+            
+            var absCurr = S.year * 12 + S.month;
+            // Verificamos si el usuario cambió manualmente el input de "Cuota Actual"
+            var currQChanged = (!isNaN(currQInput) && currQInput !== S.eCCTx.currq);
+            
+            if(!tx.fixed && currQChanged && currQInput > 0){
+                // Si forzó un número de cuota, acomodamos la línea temporal según esa cuota
+                tx.absStart = absCurr - currQInput + 1;
+            } else if (fechaCompra && fechaCompra !== S.eCCTx.fd) {
+                // Si solo cambió la fecha de compra, recalculamos en base al cierre
+                var card = null;
+                for(var k=0; k<S.ccData.cards.length; k++){
+                    if(S.ccData.cards[k].id === tx.cId){ card = S.ccData.cards[k]; break; }
+                }
+                var parts = fechaCompra.split("-");
+                var pY = parseInt(parts[0]);
+                var pM = parseInt(parts[1]) - 1;
+                var pD = parseInt(parts[2]);
+                var dCierre = card && card.dCierre ? parseInt(card.dCierre) : 0;
+                
+                if(dCierre > 0){
+                    tx.absStart = pY * 12 + pM + (pD <= dCierre ? 1 : 2);
+                } else {
+                    tx.absStart = pY * 12 + pM + 1;
+                }
+            }
+            
+            // Actualizamos sm y sy para retrocompatibilidad
+            if(tx.absStart){
+                tx.sm = tx.absStart % 12;
+                tx.sy = Math.floor(tx.absStart / 12);
+            }
             break;
         }
     }
     saveCC(); S.showEditCCTx=0; render();
 }
+
 function delCCTx(id){
     var nt = []; for(var i=0; i<S.ccData.txs.length; i++){ if(S.ccData.txs[i].id!==id) nt.push(S.ccData.txs[i]); }
     S.ccData.txs = nt;
@@ -352,7 +389,6 @@ function delS(id){
 }
 function setSP(p){S.nS.p=p;render()}
 
-// NUEVA FUNCIÓN DE GUARDADO PARA GASTOS FIJOS
 function saveAllFijos(){
     for(var i=0; i<S.data.gF.length; i++){
         var el = document.getElementById("fi-"+i);
