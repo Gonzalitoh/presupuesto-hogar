@@ -235,16 +235,16 @@ function render(){
                   var offset = card.mVenc === "0" ? 1 : 2; 
                   var calcM = S.month + offset;
                   if(calcM > 12) calcM -= 12;
-                  currVencM = calcM;
+                  currVencM = String(calcM);
               }
 
               h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
               h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta (Base)">&#9998;</button>'+selectHtml+'</span>';
               
               h+='<div style="font-size:11px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:6px">';
-              h+='Cierre: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currCierre)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'c\',this.value)" placeholder="-">';
-              h+=' &middot; Vence el: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVenc)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'v\',this.value)" placeholder="Día">';
-              h+=' / <input type="number" min="1" max="12" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVencM)+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>12)this.value=12;} updateCardDates('+card.id+',\'m\',this.value)" placeholder="Mes">';
+              h+='Cierre: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(String(currCierre))+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'c\',this.value)" placeholder="-">';
+              h+=' &middot; Vence el: <input type="number" min="1" max="31" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(String(currVenc))+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>31)this.value=31;} updateCardDates('+card.id+',\'v\',this.value)" placeholder="Día">';
+              h+=' / <input type="number" min="1" max="12" style="width:44px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(String(currVencM))+'" onchange="if(this.value!==\'\'){if(this.value<1)this.value=1;if(this.value>12)this.value=12;} updateCardDates('+card.id+',\'m\',this.value)" placeholder="Mes">';
               h+='</div>';
               
               h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
