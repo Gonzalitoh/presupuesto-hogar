@@ -226,9 +226,10 @@ function render(){
                   selectHtml = ' <span style="font-size:10px;background:var(--sol-bg);color:var(--sol);padding:2px 6px;border-radius:10px;vertical-align:middle;margin-left:6px">'+(card.p||'Hogar')+'</span>';
               }
 
+              var vMesStr = card.mVenc === "0" ? " (mismo mes)" : " (mes sig.)";
               h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
               h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta">&#9998;</button>'+selectHtml+'</span>';
-              if(card.dCierre || card.dVenc) h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Cierre: Día '+ (card.dCierre||'-') +' &middot; Vence: Día '+ (card.dVenc||'-') +'</div>';
+              if(card.dCierre || card.dVenc) h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Cierre: Día '+ (card.dCierre||'-') +' &middot; Vence: Día '+ (card.dVenc||'-') + (card.dVenc ? vMesStr : '') +'</div>';
               h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
 
               if(acts.length===0){
@@ -606,8 +607,9 @@ function render(){
       h+='</select></div>';
       
       h+='<div class="br" style="margin-bottom:12px">';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Cierre (Ej: 24)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="24"></div>';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Venc. (Ej: 4)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="4"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="nc-cierre" value="'+esc(S.nCard.dCierre)+'" min="1" max="31" placeholder="Ej: 24"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="nc-venc" value="'+esc(S.nCard.dVenc)+'" min="1" max="31" placeholder="Ej: 4"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Mes Vto.</label><select id="nc-mvenc"><option value="0"'+(S.nCard.mVenc==="0"?' selected':'')+'>Mismo mes</option><option value="1"'+(S.nCard.mVenc==="1"?' selected':'')+'>Mes sig.</option></select></div>';
       h+='</div>';
 
       if(d.mbs && (d.mbs||[]).length >= 2){
@@ -838,8 +840,9 @@ function render(){
       h+='</select></div>';
       
       h+='<div class="br" style="margin-bottom:12px">';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Cierre (Ej: 24)</label><input type="number" id="ec-cierre" value="'+esc(S.eCard.dCierre)+'" min="1" max="31"></div>';
-      h+='<div class="ig" style="margin-bottom:0"><label class="il">Día Venc. (Ej: 4)</label><input type="number" id="ec-venc" value="'+esc(S.eCard.dVenc)+'" min="1" max="31"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Cierre (Día)</label><input type="number" id="ec-cierre" value="'+esc(S.eCard.dCierre)+'" min="1" max="31"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Vto. (Día)</label><input type="number" id="ec-venc" value="'+esc(S.eCard.dVenc)+'" min="1" max="31"></div>';
+      h+='<div class="ig" style="margin-bottom:0"><label class="il">Mes Vto.</label><select id="ec-mvenc"><option value="0"'+(S.eCard.mVenc==="0"?' selected':'')+'>Mismo mes</option><option value="1"'+(S.eCard.mVenc==="1"?' selected':'')+'>Mes sig.</option></select></div>';
       h+='</div>';
       
       if(d.mbs && (d.mbs||[]).length >= 2){

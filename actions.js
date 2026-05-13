@@ -105,12 +105,13 @@ function addCard(){
     var br = document.getElementById("nc-br").value;
     var dCierre = document.getElementById("nc-cierre") ? document.getElementById("nc-cierre").value : "";
     var dVenc = document.getElementById("nc-venc") ? document.getElementById("nc-venc").value : "";
+    var mVenc = document.getElementById("nc-mvenc") ? document.getElementById("nc-mvenc").value : "1";
     if(!b) { showT("Falta completar el Banco"); return; }
     
     var p = S.nCard.p || ((S.data.mbs||[]).length > 0 ? (S.data.mbs||[])[0].n : "");
     
-    S.ccData.cards.push({id:Date.now(), b:b, br:br, p:p, dCierre:dCierre, dVenc:dVenc});
-    saveCC(); S.showNewCard=false; S.nCard={b:"", br:"Visa", p:"", dCierre:"", dVenc:""}; render();
+    S.ccData.cards.push({id:Date.now(), b:b, br:br, p:p, dCierre:dCierre, dVenc:dVenc, mVenc:mVenc});
+    saveCC(); S.showNewCard=false; S.nCard={b:"", br:"Visa", p:"", dCierre:"", dVenc:"", mVenc:"1"}; render();
 }
 function delCard(id){
     var nc = []; for(var i=0; i<S.ccData.cards.length; i++){ if(S.ccData.cards[i].id!==id) nc.push(S.ccData.cards[i]); }
@@ -123,7 +124,7 @@ function openEditCard(id){
     var c = null;
     for(var i=0;i<S.ccData.cards.length;i++){if(S.ccData.cards[i].id===id){c=S.ccData.cards[i];break}}
     if(!c)return;
-    S.eCard = {id:c.id, b:c.b, br:c.br, p:c.p||"Hogar", dCierre:c.dCierre||"", dVenc:c.dVenc||""};
+    S.eCard = {id:c.id, b:c.b, br:c.br, p:c.p||"Hogar", dCierre:c.dCierre||"", dVenc:c.dVenc||"", mVenc:c.mVenc||"1"};
     S.showEditCard = id;
     render();
 }
@@ -132,6 +133,7 @@ function saveEditCard(){
     var br = document.getElementById("ec-br").value;
     var dCierre = document.getElementById("ec-cierre").value;
     var dVenc = document.getElementById("ec-venc").value;
+    var mVenc = document.getElementById("ec-mvenc").value;
     if(!b){showT("Falta el nombre del banco");return;}
     
     for(var i=0;i<S.ccData.cards.length;i++){
@@ -140,6 +142,7 @@ function saveEditCard(){
             S.ccData.cards[i].br = br;
             S.ccData.cards[i].dCierre = dCierre;
             S.ccData.cards[i].dVenc = dVenc;
+            S.ccData.cards[i].mVenc = mVenc;
             S.ccData.cards[i].p = S.eCard.p;
             break;
         }
@@ -264,7 +267,6 @@ function openEditCCTx(id){
     for(var i=0;i<S.ccData.txs.length;i++){if(S.ccData.txs[i].id===id){tx=S.ccData.txs[i];break}}
     if(!tx)return;
     
-    // Calculamos qué cuota está corriendo en el mes que estamos visualizando
     var absCurr = S.year * 12 + S.month;
     var absStart = tx.absStart !== undefined ? tx.absStart : (tx.sy * 12 + tx.sm);
     var currQ = absCurr - absStart + 1;
@@ -296,14 +298,11 @@ function saveEditCCTx(){
             tx.fd = fechaCompra;
             
             var absCurr = S.year * 12 + S.month;
-            // Verificamos si el usuario cambió manualmente el input de "Cuota Actual"
             var currQChanged = (!isNaN(currQInput) && currQInput !== S.eCCTx.currq);
             
             if(!tx.fixed && currQChanged && currQInput > 0){
-                // Si forzó un número de cuota, acomodamos la línea temporal según esa cuota
                 tx.absStart = absCurr - currQInput + 1;
             } else if (fechaCompra && fechaCompra !== S.eCCTx.fd) {
-                // Si solo cambió la fecha de compra, recalculamos en base al cierre
                 var card = null;
                 for(var k=0; k<S.ccData.cards.length; k++){
                     if(S.ccData.cards[k].id === tx.cId){ card = S.ccData.cards[k]; break; }
@@ -321,7 +320,6 @@ function saveEditCCTx(){
                 }
             }
             
-            // Actualizamos sm y sy para retrocompatibilidad
             if(tx.absStart){
                 tx.sm = tx.absStart % 12;
                 tx.sy = Math.floor(tx.absStart / 12);
