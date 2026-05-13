@@ -100,6 +100,13 @@ function saveCfg(){
 }
 
 // Tarjetas Actions
+function updateCardDates(cId, field, val){
+    if(!S.data.cDates) S.data.cDates = {};
+    if(!S.data.cDates[cId]) S.data.cDates[cId] = {};
+    S.data.cDates[cId][field] = val;
+    saveD();
+}
+
 function addCard(){
     var b = document.getElementById("nc-b").value;
     var br = document.getElementById("nc-br").value;
@@ -188,7 +195,9 @@ function addCCTx(){
         purchaseMonth = parseInt(parts[1]) - 1; 
         var purchaseDay = parseInt(parts[2]);
         
-        var dCierre = card && card.dCierre ? parseInt(card.dCierre) : 0;
+        var cOverride = S.data.cDates && S.data.cDates[cid] ? S.data.cDates[cid].c : null;
+        var dCierreStr = (cOverride !== null && cOverride !== undefined && cOverride !== "") ? cOverride : (card && card.dCierre ? card.dCierre : "0");
+        var dCierre = parseInt(dCierreStr) || 0;
         
         if(dCierre > 0){
             if(purchaseDay <= dCierre){
@@ -311,7 +320,10 @@ function saveEditCCTx(){
                 var pY = parseInt(parts[0]);
                 var pM = parseInt(parts[1]) - 1;
                 var pD = parseInt(parts[2]);
-                var dCierre = card && card.dCierre ? parseInt(card.dCierre) : 0;
+                
+                var cOverride = S.data.cDates && S.data.cDates[tx.cId] ? S.data.cDates[tx.cId].c : null;
+                var dCierreStr = (cOverride !== null && cOverride !== undefined && cOverride !== "") ? cOverride : (card && card.dCierre ? card.dCierre : "0");
+                var dCierre = parseInt(dCierreStr) || 0;
                 
                 if(dCierre > 0){
                     tx.absStart = pY * 12 + pM + (pD <= dCierre ? 1 : 2);
@@ -433,6 +445,7 @@ function doResetMonth(){
           d.pG = p.pG||0; d.pA = p.pA||0;
           if(p.pC) d.pC = JSON.parse(JSON.stringify(p.pC));
           if(p.mbs) d.mbs = JSON.parse(JSON.stringify(p.mbs));
+          if(p.cDates) d.cDates = JSON.parse(JSON.stringify(p.cDates));
       } catch(e) {}
   }
   S.data = d;

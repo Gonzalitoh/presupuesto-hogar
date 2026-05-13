@@ -9,7 +9,7 @@ var S={
     eCard:{id:0,b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}
 };
 
-function mkD(m,y){return{month:m,year:y,mbs:[],pG:0,pA:0,gF:CF.map(function(c){return{n:c,m:0}}),gR:[],gC:[],pC:{},notas:""}}
+function mkD(m,y){return{month:m,year:y,mbs:[],pG:0,pA:0,gF:CF.map(function(c){return{n:c,m:0}}),gR:[],gC:[],pC:{},notas:"",cDates:{}}}
 
 function loadD(){
   var ccRaw = localStorage.getItem('budget_cc_data');
@@ -25,6 +25,7 @@ function loadD(){
       if(!S.data.gC)S.data.gC=[];
       if(!S.data.pC)S.data.pC={};
       if(S.data.notas==null)S.data.notas="";
+      if(!S.data.cDates)S.data.cDates={};
       if(!S.data.mbs) {
           if(S.data.iS !== undefined) S.data.mbs = [{n:"Sol", i:S.data.iS||0}, {n:"Gon", i:S.data.iG||0}];
           else S.data.mbs = [];
@@ -42,6 +43,7 @@ function loadD(){
             if(p.pC) d.pC = JSON.parse(JSON.stringify(p.pC));
             if(p.mbs) d.mbs = JSON.parse(JSON.stringify(p.mbs));
             else if(p.iS !== undefined) d.mbs=[{n:"Sol", i:p.iS||0}, {n:"Gon", i:p.iG||0}];
+            if(p.cDates) d.cDates = JSON.parse(JSON.stringify(p.cDates));
         } catch(e) {}
     }
     S.data=d;

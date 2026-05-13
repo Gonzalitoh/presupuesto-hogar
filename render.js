@@ -226,10 +226,20 @@ function render(){
                   selectHtml = ' <span style="font-size:10px;background:var(--sol-bg);color:var(--sol);padding:2px 6px;border-radius:10px;vertical-align:middle;margin-left:6px">'+(card.p||'Hogar')+'</span>';
               }
 
+              var cOverride = (d.cDates && d.cDates[card.id]) ? d.cDates[card.id] : {};
+              var currCierre = cOverride.c !== undefined && cOverride.c !== "" ? cOverride.c : (card.dCierre||'');
+              var currVenc = cOverride.v !== undefined && cOverride.v !== "" ? cOverride.v : (card.dVenc||'');
+
               var vMesStr = card.mVenc === "0" ? " (mismo mes)" : " (mes sig.)";
               h+='<div class="cd"><div class="cbh" style="align-items:flex-start">';
-              h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta">&#9998;</button>'+selectHtml+'</span>';
-              if(card.dCierre || card.dVenc) h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Cierre: Día '+ (card.dCierre||'-') +' &middot; Vence: Día '+ (card.dVenc||'-') + (card.dVenc ? vMesStr : '') +'</div>';
+              h+='<div><span class="ct" style="margin:0; display:flex; align-items:center;">&#128179; '+esc(card.b)+' ('+card.br+') <button class="gx" style="font-size:14px; margin-left:6px; color:var(--sol)" onclick="openEditCard('+card.id+')" title="Editar Tarjeta (Base)">&#9998;</button>'+selectHtml+'</span>';
+              
+              h+='<div style="font-size:11px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:6px">';
+              h+='Cierre: <input type="number" style="width:46px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currCierre)+'" onblur="updateCardDates('+card.id+',\'c\',this.value)" placeholder="-">';
+              h+=' &middot; Vence: <input type="number" style="width:46px;padding:3px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" value="'+esc(currVenc)+'" onblur="updateCardDates('+card.id+',\'v\',this.value)" placeholder="-">';
+              h+= '<span style="color:var(--text3)">' + vMesStr + '</span>';
+              h+='</div>';
+              
               h+='</div><span class="sv" style="margin:0;font-size:16px">'+fmt(cTot)+'</span></div>';
 
               if(acts.length===0){
@@ -696,8 +706,13 @@ function render(){
       
       var infoCard = null;
       for(var ci=0;ci<S.ccData.cards.length;ci++){if(S.ccData.cards[ci].id===S.nCCTx.cId){infoCard=S.ccData.cards[ci];break}}
-      if(infoCard && infoCard.dCierre){
-        h+='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px">&#128197; Cierre d&#237;a '+infoCard.dCierre+(infoCard.dVenc?' &middot; Vto d&#237;a '+infoCard.dVenc:'')+'<br>Los consumos antes del cierre se pagan el mes siguiente.</div>';
+      if(infoCard){
+        var cOverride = S.data.cDates && S.data.cDates[infoCard.id] ? S.data.cDates[infoCard.id] : {};
+        var showCierre = cOverride.c !== undefined && cOverride.c !== "" ? cOverride.c : infoCard.dCierre;
+        var showVenc = cOverride.v !== undefined && cOverride.v !== "" ? cOverride.v : infoCard.dVenc;
+        if(showCierre){
+          h+='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px">&#128197; Cierre en este mes: d&#237;a '+showCierre+(showVenc?' &middot; Vto d&#237;a '+showVenc:'')+'<br>Los consumos antes del cierre se pagan el mes siguiente.</div>';
+        }
       }
       h+='<div class="br"><button class="bp" onclick="addCCTx()">Agregar</button><button class="bs" onclick="SS({showNewCCTx:false})">Cancelar</button></div>';
       h+='</div></div>';
@@ -818,6 +833,18 @@ function render(){
     h+='<button class="tg" style="'+(S.eCCTx.t!=="Personal"?'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)':'')+'" onclick="S.eCCTx.t=\'Hogar\';render()">Hogar</button>';
     h+='<button class="tg" style="'+(S.eCCTx.t==="Personal"?'background:#e5e7eb;border-color:#6b7280;color:#4b5563':'')+'" onclick="S.eCCTx.t=\'Personal\';render()">Personal</button>';
     h+='</div></div>';
+
+    var infoCard2 = null;
+    for(var ci=0;ci<S.ccData.cards.length;ci++){if(S.ccData.cards[ci].id===S.eCCTx.cId){infoCard2=S.ccData.cards[ci];break}}
+    if(infoCard2){
+      var cOverride2 = S.data.cDates && S.data.cDates[infoCard2.id] ? S.data.cDates[infoCard2.id] : {};
+      var showCierre2 = cOverride2.c !== undefined && cOverride2.c !== "" ? cOverride2.c : infoCard2.dCierre;
+      var showVenc2 = cOverride2.v !== undefined && cOverride2.v !== "" ? cOverride2.v : infoCard2.dVenc;
+      if(showCierre2){
+        h+='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px">&#128197; Cierre en este mes: d&#237;a '+showCierre2+(showVenc2?' &middot; Vto d&#237;a '+showVenc2:'')+'<br>Los consumos antes del cierre se pagan el mes siguiente.</div>';
+      }
+    }
+
     h+='<div class="br"><button class="bp" onclick="saveEditCCTx()">Guardar</button><button class="bs" onclick="SS({showEditCCTx:0})">Cancelar</button></div>';
     h+='</div></div>';
   }
@@ -832,7 +859,8 @@ function render(){
 
   if(S.showEditCard){
       h+='<div class="mo" onclick="closeM(event)"><div class="ms" onclick="event.stopPropagation()"><div class="mh"></div>';
-      h+='<div class="ct" style="margin-bottom:16px">Editar Tarjeta</div>';
+      h+='<div class="ct" style="margin-bottom:16px">Editar Tarjeta (Base)</div>';
+      h+='<p style="font-size:11px;color:var(--text3);margin-bottom:12px">Estos datos se usarán por defecto si no le ponés fechas específicas a un mes.</p>';
       h+='<div class="ig"><label class="il">Banco</label><input type="text" id="ec-b" value="'+esc(S.eCard.b)+'"></div>';
       h+='<div class="ig"><label class="il">Marca de la Tarjeta</label><select id="ec-br">';
       var brs=["Visa","Mastercard","American Express","Cabal","Naranja","Otra"];
