@@ -255,17 +255,28 @@ function render(){
                   for(var j=0;j<acts.length;j++){
                       var a = acts[j];
                       var usdInfo = "";
+                      var amtDisplay = "";
                       if(a.tx.cur === "USD" && a.tx.mUsd){
-                        var usdPerQ = a.tx.mUsd / a.tx.q;
-                        usdInfo = ' <span style="font-size:10px;color:var(--green);font-weight:400">'+fmtUSD(usdPerQ)+'</span>';
-                        var curRate = DOLAR.tarjeta || DOLAR.oficial || 0;
-                        if(curRate > 0){
-                          var curArs = Math.round(usdPerQ * curRate);
-                          var origArs = Math.round(a.amt);
-                          if(Math.abs(curArs - origArs) > 10){
-                            usdInfo += ' <span style="font-size:9px;color:var(--text3)">(hoy: '+fmt(curArs)+')</span>';
+                        var usdPerQ = a.tx.fixed ? (a.tx.mUsd||0) : (a.tx.mUsd / a.tx.q);
+                        if(a.tx.payM === "USD"){
+                          // Paying in USD: show USD as main, ARS as secondary
+                          usdInfo = ' <span style="font-size:10px;color:var(--green);font-weight:600">'+fmtUSD(usdPerQ)+'</span>';
+                          amtDisplay = '<div class="fv" style="text-align:right"><div style="font-weight:700;color:var(--green)">'+fmtUSD(usdPerQ)+'</div><div style="font-size:10px;color:var(--text3)">'+fmt(a.amt)+'</div></div>';
+                        } else {
+                          // Paying in ARS: show ARS as main, USD as tag
+                          usdInfo = ' <span style="font-size:10px;color:var(--green);font-weight:400">'+fmtUSD(usdPerQ)+'</span>';
+                          var curRate = DOLAR.tarjeta || DOLAR.oficial || 0;
+                          if(curRate > 0){
+                            var curArs = Math.round(usdPerQ * curRate);
+                            var origArs = Math.round(a.amt);
+                            if(Math.abs(curArs - origArs) > 10){
+                              usdInfo += ' <span style="font-size:9px;color:var(--text3)">(hoy: '+fmt(curArs)+')</span>';
+                            }
                           }
+                          amtDisplay = '<div class="fv">'+fmt(a.amt)+'</div>';
                         }
+                      } else {
+                        amtDisplay = '<div class="fv">'+fmt(a.amt)+'</div>';
                       }
                       
                       var tTag = (a.tx.t === "Personal") ? '<span style="font-size:9px;background:#e5e7eb;color:#4b5563;padding:1px 4px;border-radius:4px;margin-left:4px;font-weight:600">PERSONAL</span>' : '<span style="font-size:9px;background:var(--sol-bg);color:var(--sol);padding:1px 4px;border-radius:4px;margin-left:4px;font-weight:600">HOGAR</span>';
@@ -277,7 +288,7 @@ function render(){
                       var dateTag = a.tx.fd ? ' <span style="font-size:9px;color:var(--text3)">'+a.tx.fd+'</span>' : '';
                       var lastTag2 = (!a.tx.fixed && a.currQ === a.tx.q && a.tx.q > 1) ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:600">ULTIMA</span> ' : '';
                       h+='<div class="fr"><div class="fn"><div style="font-weight:600">'+esc(a.tx.d)+usdInfo+tTag+' '+lastTag2+' <span style="font-size:11px;color:var(--text3);font-weight:400">'+cuotaLabel+'</span>'+dateTag+'</div><div class="gm">'+a.tx.c+'</div></div>';
-                      h+='<div class="fv">'+fmt(a.amt)+'</div>';
+                      h+=amtDisplay;
                       h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditCCTx('+a.tx.id+')" title="Editar">&#9998;</button>';
                       h+='<button class="gx" onclick="delCCTx('+a.tx.id+')">&times;</button></div>';
                   }
@@ -819,7 +830,24 @@ function render(){
     h+='<div class="mo" onclick="closeM(event)"><div class="ms" onclick="event.stopPropagation()"><div class="mh"></div>';
     h+='<div class="ct" style="margin-bottom:16px">Editar Consumo de Tarjeta</div>';
     h+='<div class="ig"><label class="il">Descripcion</label><input type="text" id="ex-d" value="'+esc(S.eCCTx.d)+'"></div>';
-    h+='<div class="ig"><label class="il">Monto'+(S.eCCTx.fixed?' mensual':'')+'</label><input type="number" id="ex-m" value="'+S.eCCTx.m+'"></div>';
+    
+    // Currency toggle
+    h+='<div class="ig"><label class="il">Moneda</label><div class="tr">';
+    h+='<button class="tg" style="'+(S.eCCTx.cur==="USD"?'':'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)')+'" onclick="S.eCCTx.cur=\'ARS\';render()">$ ARS</button>';
+    h+='<button class="tg" style="'+(S.eCCTx.cur==="USD"?'background:var(--green-bg);border-color:var(--green);color:var(--green)':'')+'" onclick="S.eCCTx.cur=\'USD\';render()">US$ USD</button>';
+    h+='</div></div>';
+    
+    if(S.eCCTx.cur==="USD"){
+      h+='<div class="ig"><label class="il">&#191;C&#243;mo se paga?</label><div class="tr">';
+      h+='<button class="tg" style="'+(S.eCCTx.payM!=="USD"?'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)':'')+'" onclick="S.eCCTx.payM=\'ARS\';render()">En Pesos</button>';
+      h+='<button class="tg" style="'+(S.eCCTx.payM==="USD"?'background:var(--green-bg);border-color:var(--green);color:var(--green)':'')+'" onclick="S.eCCTx.payM=\'USD\';render()">En D&#243;lares</button>';
+      h+='</div></div>';
+      h+='<div class="ig"><label class="il">Monto en USD</label><input type="number" id="ex-musd" value="'+(S.eCCTx.mUsd||'')+'" step="0.01" placeholder="0.00"></div>';
+      h+='<div class="ig"><label class="il">Equivalente en ARS</label><input type="number" id="ex-m" value="'+S.eCCTx.m+'" placeholder="0"></div>';
+    } else {
+      h+='<div class="ig"><label class="il">Monto'+(S.eCCTx.fixed?' mensual':'')+'</label><input type="number" id="ex-m" value="'+S.eCCTx.m+'"></div>';
+    }
+    
     h+='<div class="ig"><label class="il">Tipo de gasto</label><div class="tr">';
     h+='<button class="tg" style="'+(S.eCCTx.fixed?'':'background:var(--sol-bg);border-color:var(--sol);color:var(--sol)')+'" onclick="S.eCCTx.fixed=false;render()">En cuotas</button>';
     h+='<button class="tg" style="'+(S.eCCTx.fixed?'background:var(--yellow-bg);border-color:var(--yellow);color:var(--yellow)':'')+'" onclick="S.eCCTx.fixed=true;render()">Fijo mensual</button>';

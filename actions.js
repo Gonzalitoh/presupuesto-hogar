@@ -288,9 +288,13 @@ function openEditCCTx(id){
     var absCurr = S.year * 12 + S.month;
     var absStart = tx.absStart !== undefined ? tx.absStart : (tx.sy * 12 + tx.sm);
     var currQ = absCurr - absStart + 1;
-    if(currQ < 1) currQ = ""; 
+    if(currQ < 1) currQ = "";
     
-    S.eCCTx = {id:tx.id, cId:tx.cId, d:tx.d, m:tx.m, q:tx.q||1, c:tx.c, t:tx.t||"Hogar", fixed:!!tx.fixed, fd:tx.fd||"", currq: currQ};
+    S.eCCTx = {
+        id:tx.id, cId:tx.cId, d:tx.d, m:tx.m, q:tx.q||1, c:tx.c,
+        t:tx.t||"Hogar", fixed:!!tx.fixed, fd:tx.fd||"", currq:currQ,
+        cur:tx.cur||"ARS", payM:tx.payM||"ARS", mUsd:tx.mUsd||""
+    };
     S.showEditCCTx = id;
     render();
 }
@@ -305,6 +309,8 @@ function saveEditCCTx(){
     var fechaCompra = fdEl ? fdEl.value : "";
     var currQEl = document.getElementById("ex-currq");
     var currQInput = currQEl ? parseInt(currQEl.value) : NaN;
+    var mUsdEl = document.getElementById("ex-musd");
+    var mUsd = mUsdEl ? (parseFloat(mUsdEl.value)||0) : 0;
     
     if(!d||!m||!c){showT("Faltan datos");return;}
     
@@ -314,13 +320,16 @@ function saveEditCCTx(){
             tx.d=d; tx.m=m; tx.q=q; tx.c=c; tx.t=S.eCCTx.t;
             tx.fixed = S.eCCTx.fixed ? true : false;
             tx.fd = fechaCompra;
+            tx.cur = S.eCCTx.cur;
+            tx.payM = S.eCCTx.payM;
+            if(S.eCCTx.cur === "USD" && mUsd > 0) tx.mUsd = mUsd;
             
             var absCurr = S.year * 12 + S.month;
             var currQChanged = (!isNaN(currQInput) && currQInput !== S.eCCTx.currq);
             
             if(!tx.fixed && currQChanged && currQInput > 0){
                 tx.absStart = absCurr - currQInput + 1;
-            } else if (fechaCompra && fechaCompra !== S.eCCTx.fd) {
+            } else if (fechaCompra && fechaCompra !== (S.eCCTx.fd||"")){
                 var card = null;
                 for(var k=0; k<S.ccData.cards.length; k++){
                     if(S.ccData.cards[k].id === tx.cId){ card = S.ccData.cards[k]; break; }
@@ -329,19 +338,12 @@ function saveEditCCTx(){
                 var pY = parseInt(parts[0]);
                 var pM = parseInt(parts[1]) - 1;
                 var pD = parseInt(parts[2]);
-                
-                var cOverride = S.data.cDates && S.data.cDates[tx.cId] ? S.data.cDates[tx.cId].c : null;
-                var dCierreStr = (cOverride !== null && cOverride !== undefined && cOverride !== "") ? cOverride : (card && card.dCierre ? card.dCierre : "0");
-                var dCierre = parseInt(dCierreStr) || 0;
-                
+                var dCierre = card && card.dCierre ? (parseInt(card.dCierre)||0) : 0;
                 if(dCierre > 0){
                     tx.absStart = pY * 12 + pM + (pD <= dCierre ? 1 : 2);
                 } else {
                     tx.absStart = pY * 12 + pM + 1;
                 }
-            }
-            
-            if(tx.absStart){
                 tx.sm = tx.absStart % 12;
                 tx.sy = Math.floor(tx.absStart / 12);
             }

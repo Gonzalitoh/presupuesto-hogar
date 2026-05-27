@@ -5,7 +5,7 @@ var S={
     mpY:new Date().getFullYear(), gastoFilter:"",
     cfgD:{}, cbD:{}, nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar",payM:"ARS",fixed:false},
     eG:{id:0,d:"",m:"",c:"",f:"",owner:"Hogar"},
-    eCCTx:{id:0,cId:"",d:"",m:"",q:1,c:"",t:"Hogar",fixed:false,fd:"",currq:""},
+    eCCTx:{id:0,cId:"",d:"",m:"",q:1,c:"",t:"Hogar",fixed:false,fd:"",currq:"",cur:"ARS",payM:"ARS",mUsd:""},
     eCard:{id:0,b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}
 };
 
@@ -92,7 +92,14 @@ function doCalc(d){
           var effectiveQ = tx.fixed ? 9999 : (tx.q || 1);
           
           if(diff >= 0 && diff < effectiveQ){
-              var amtPerQ = tx.fixed ? tx.m : (tx.m / tx.q);
+              // If paid in USD, keep amount in USD; otherwise use ARS
+              var amtPerQ;
+              if(tx.fixed){
+                  amtPerQ = (tx.cur === "USD" && tx.payM === "USD") ? (tx.mUsd || tx.m) : tx.m;
+              } else {
+                  amtPerQ = (tx.cur === "USD" && tx.payM === "USD") ? ((tx.mUsd || 0) / tx.q) : (tx.m / tx.q);
+              }
+              var amtARS = tx.fixed ? tx.m : (tx.m / tx.q); // Always keep ARS for totals
               
               var card = null;
               for(var k=0; k<S.ccData.cards.length; k++){ if(S.ccData.cards[k].id === tx.cId){ card = S.ccData.cards[k]; break; } }
@@ -102,21 +109,21 @@ function doCalc(d){
               var displayQ = tx.fixed ? 0 : currQ; 
 
               if(owner !== "Hogar"){
-                  cardBillByPerson[owner] = (cardBillByPerson[owner]||0) + amtPerQ;
+                  cardBillByPerson[owner] = (cardBillByPerson[owner]||0) + amtARS;
                   
                   if (tx.t === "Personal") {
-                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
+                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtARS, amtUsd: (tx.cur==="USD"&&tx.payM==="USD") ? amtPerQ : 0 });
                   } else {
-                      ccTotalByPerson[owner] = (ccTotalByPerson[owner]||0) + amtPerQ;
-                      tT += amtPerQ;
-                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
+                      ccTotalByPerson[owner] = (ccTotalByPerson[owner]||0) + amtARS;
+                      tT += amtARS;
+                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtARS, amtUsd: (tx.cur==="USD"&&tx.payM==="USD") ? amtPerQ : 0 });
                   }
               } else {
-                  tT += amtPerQ;
+                  tT += amtARS;
                   if (tx.t === "Personal") {
-                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
+                      ccActivePersonal.push({ tx: tx, currQ: displayQ, amt: amtARS, amtUsd: (tx.cur==="USD"&&tx.payM==="USD") ? amtPerQ : 0 });
                   } else {
-                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtPerQ });
+                      ccActive.push({ tx: tx, currQ: displayQ, amt: amtARS, amtUsd: (tx.cur==="USD"&&tx.payM==="USD") ? amtPerQ : 0 });
                   }
               }
           }
