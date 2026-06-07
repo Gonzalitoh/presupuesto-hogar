@@ -40,6 +40,14 @@ function syncCfgInputs(){
 
 // ==================================================
 
+function toggleCatP(idx){
+    var cats = window._dashCatsP || [];
+    if(!cats[idx]) return;
+    var key = "P_"+idx;
+    S.catDetail = (S.catDetail === key) ? "" : key;
+    render();
+}
+
 function toggleCat(idx){
     var cats = window._dashCats || [];
     if(!cats[idx]) return;

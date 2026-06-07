@@ -149,9 +149,14 @@ function doCalc(d){
   var limit = Math.max(0, pG - pA);
   var rest = limit - tG;
   
-  var pCat={}; 
-  for(var i=0; i<gV.length; i++){var g=gV[i]; pCat[g.c]=(pCat[g.c]||0)+g.m}
+  var pCat={}; var pCatPersonal={};
+  for(var i=0; i<gV.length; i++){
+    var g=gV[i];
+    if(g.owner && g.owner!=="Hogar"){ pCatPersonal[g.c]=(pCatPersonal[g.c]||0)+g.m; }
+    else { pCat[g.c]=(pCat[g.c]||0)+g.m; }
+  }
   for(var i=0; i<ccActive.length; i++){var a=ccActive[i]; pCat[a.tx.c]=(pCat[a.tx.c]||0)+a.amt}
+  for(var i=0; i<ccActivePersonal.length; i++){var ap=ccActivePersonal[i]; pCatPersonal[ap.tx.c]=(pCatPersonal[ap.tx.c]||0)+ap.amt}
   
   var sh=d.gC||[]; var tS_manual=0; 
   for(var i=0; i<sh.length; i++) tS_manual += (sh[i].m||0);
@@ -206,7 +211,7 @@ function doCalc(d){
           });
       }
   }
-  return{iT:iT, mbs:mbs, mStats:mStats, tF:tF, tV:tV, tT:tT, ccActive:ccActive, ccActivePersonal:ccActivePersonal, tG:tG, pG:pG, pA:pA, limit:limit, rest:rest, pCat:pCat, tS:tS}
+  return{iT:iT, mbs:mbs, mStats:mStats, tF:tF, tV:tV, tT:tT, ccActive:ccActive, ccActivePersonal:ccActivePersonal, tG:tG, pG:pG, pA:pA, limit:limit, rest:rest, pCat:pCat, pCatPersonal:pCatPersonal, tS:tS}
 }
 function cc(){return doCalc(S.data)}
 

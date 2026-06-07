@@ -184,6 +184,58 @@ function render(){
       h+='</div>';
     }
 
+    // Por Categoria Personal
+    window._dashCatsP = [];
+    var catKeysP=Object.keys(c.pCatPersonal||{});
+    for(var i=0; i<catKeysP.length; i++) window._dashCatsP.push([catKeysP[i], c.pCatPersonal[catKeysP[i]]]);
+    window._dashCatsP.sort(function(a,b){return b[1]-a[1]});
+    if(window._dashCatsP.length>0){
+      var totalPersonal=0;
+      for(var i=0;i<window._dashCatsP.length;i++) totalPersonal+=window._dashCatsP[i][1];
+      h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+      h+='<span class="ct" style="margin:0">Por Categor&#237;a (Personal)</span>';
+      h+='<span style="font-size:12px;font-weight:700;color:var(--text2)">'+fmt(totalPersonal)+'</span></div>';
+      for(var i=0;i<window._dashCatsP.length;i++){
+        var catP=window._dashCatsP[i][0]; var montoP=window._dashCatsP[i][1];
+        var catPctP=totalPersonal>0?(montoP/totalPersonal)*100:0;
+        var colP=CCOLORS[catP]||"#6366f1";
+        var isOpenP=S.catDetail===("P_"+i);
+        h+='<div class="cbr">';
+        h+='<div class="cbh" onclick="toggleCatP('+i+')" style="cursor:pointer">';
+        h+='<span class="cbn">'+cic(catP)+' '+fmtCat(catP)+' <span style="font-size:10px;color:var(--text3)">'+(isOpenP?'&#9650;':'&#9660;')+'</span></span>';
+        h+='<span class="cba">'+fmt(montoP)+'</span></div>';
+        h+='<div class="cbt"><div class="cbf" style="width:'+Math.min(catPctP,100)+'%;background:'+colP+'"></div></div>';
+        if(isOpenP){
+          h+='<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">';
+          var gItemsP=d.gR||[];
+          for(var j=0;j<gItemsP.length;j++){
+            var gp=gItemsP[j];
+            if(gp.c!==catP||!gp.owner||gp.owner==="Hogar") continue;
+            var pcolP=null;
+            for(var k=0;k<(d.mbs||[]).length;k++){if((d.mbs||[])[k].n===gp.owner){pcolP=PCOLORS[k%PCOLORS.length];break}}
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+            h+='<span>'+esc(gp.d);
+            if(pcolP) h+=' <span style="font-size:9px;background:'+pcolP.b+';color:'+pcolP.c+';padding:1px 5px;border-radius:4px;font-weight:600">'+esc(gp.owner)+'</span>';
+            if(gp.f) h+=' <span style="color:var(--text3);font-size:10px">'+gp.f+'</span>';
+            h+='</span><span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(gp.m)+'</strong>';
+            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditG('+gp.id+')">&#9998;</button></span></div>';
+          }
+          for(var j=0;j<c.ccActivePersonal.length;j++){
+            var ap=c.ccActivePersonal[j];
+            if(ap.tx.c!==catP) continue;
+            var qLblP=ap.tx.fixed?'(Fijo)':'('+ap.currQ+'/'+ap.tx.q+')';
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+            h+='<span style="color:var(--sol)">&#128179; '+esc(ap.tx.d)+' <span style="color:var(--text3);font-size:10px">'+qLblP+'</span></span>';
+            h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(ap.amt)+'</strong>';
+            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditCCTx('+ap.tx.id+')">&#9998;</button></span></div>';
+          }
+          h+='</div>';
+        }
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+
     if((d.gC||[]).length>0 && (d.mbs||[]).length >= 2){
       h+='<div class="cd" style="background:#f5f5f3"><div class="ct">Gastos compartidos</div>';
       var dts=[], cds=[];
