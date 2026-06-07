@@ -41,39 +41,55 @@ function render(){
 
   // === DASHBOARD ===
   if(S.view==="dashboard"){
-    h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    h+='<div><div class="sl">Ingreso Total</div><div style="font-size:22px;font-weight:700">'+fmt(c.iT)+'</div></div>';
+    // Calculate total aportes (what each person actually contributes to the hogar)
+    var totalAporte = 0;
+    for(var i=0;i<(c.mStats||[]).length;i++) totalAporte += c.mStats[i].a;
+    // If no manual aportes set, fall back to pG
+    if(totalAporte === 0) totalAporte = c.pG;
     
+    var sobrante = totalAporte - c.tG;
+    var ppA = totalAporte > 0 ? Math.min((c.tG / totalAporte) * 100, 130) : 0;
+    var pcA = ppA > 100 ? 'var(--red)' : ppA > 80 ? '#f59e0b' : 'var(--green)';
+
+    // Header: Aporte Total al Hogar (not incomes)
+    h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:flex-start">';
+    h+='<div><div class="sl">Aporte Total al Hogar</div><div style="font-size:22px;font-weight:700">'+fmt(totalAporte)+'</div></div>';
     if(c.mStats.length > 0){
-        var nms=[], inc=[];
+        var nms=[], aps=[];
         for(var i=0;i<c.mStats.length;i++){
             var pcol = PCOLORS[i % PCOLORS.length];
-            nms.push('<span style="color:'+pcol.c+'">'+c.mStats[i].n + ' ' + pctF(c.mStats[i].p)+'</span>');
-            inc.push('<span style="color:'+pcol.c+'">'+fmt(c.mStats[i].i)+'</span>');
+            nms.push('<span style="color:'+pcol.c+'">'+c.mStats[i].n+'</span>');
+            aps.push('<span style="color:'+pcol.c+'">'+fmt(c.mStats[i].a||0)+'</span>');
         }
         h+='<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">'+nms.join(' &middot; ')+'</div>';
-        h+='<div style="font-size:13px;margin-top:2px;font-weight:600">'+inc.join(' &middot; ')+'</div></div>';
+        h+='<div style="font-size:13px;margin-top:2px;font-weight:600">'+aps.join(' &middot; ')+'</div></div>';
     } else {
         h+='<div style="text-align:right;cursor:pointer" onclick="openCfg()"><div style="font-size:11px;color:var(--red)">Sin integrantes</div><div style="font-size:13px;margin-top:2px;font-weight:600">Agregar +</div></div>';
     }
     h+='</div></div>';
 
-    h+='<div class="cd"><div style="display:flex;justify-content:space-between;margin-bottom:6px">';
-    h+='<span style="font-size:13px;font-weight:600">Gastado vs L&#237;mite (Sin Ahorro)</span>';
-    h+='<span style="font-size:13px;font-weight:600;color:'+(c.rest<0?'var(--red)':'var(--green)')+'">'+(c.rest>=0?'Quedan '+fmt(c.rest):'Excedido '+fmt(Math.abs(c.rest)))+'</span></div>';
-    h+='<div class="pt"><div class="pf" style="width:'+pp+'%;background:'+pc+'"></div></div>';
-    h+='<div class="pl"><span>'+fmt(c.tG)+'</span><span>Límite: '+fmt(c.limit)+'</span></div></div>';
+    // Progress bar: gastos vs aporte
+    h+='<div class="cd">';
+    h+='<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
+    h+='<span style="font-size:13px;font-weight:600">Gastos del Hogar vs Aporte</span>';
+    h+='<span style="font-size:13px;font-weight:600;color:'+(sobrante>=0?'var(--green)':'var(--red)')+'">'+(sobrante>=0?'Quedan '+fmt(sobrante):'Excedido '+fmt(Math.abs(sobrante)))+'</span></div>';
+    h+='<div class="pt"><div class="pf" style="width:'+Math.min(ppA,100)+'%;background:'+pcA+'"></div></div>';
+    h+='<div class="pl"><span>Gastado: '+fmt(c.tG)+'</span><span>Aporte: '+fmt(totalAporte)+'</span></div></div>';
 
+    // Cards: Fijos, Variables, Tarjetas, Total Gastos, Sobrante/Faltante
     h+='<div class="g2">';
     h+='<div class="cd sc"><div class="sl">Gastos Fijos</div><div class="sv">'+fmt(c.tF)+'</div></div>';
     h+='<div class="cd sc"><div class="sl">Gastos Variables</div><div class="sv">'+fmt(c.tV)+'</div></div>';
     h+='<div class="cd sc" style="background:var(--sol-bg)"><div class="sl">Tarjetas (Hogar)</div><div class="sv" style="color:var(--sol)">'+fmt(c.tT)+'</div></div>';
     h+='<div class="cd sc" style="background:var(--red-bg)"><div class="sl" style="color:var(--red)">Total Gastos Hogar</div><div class="sv" style="color:var(--red)">'+fmt(c.tG)+'</div></div>';
-    h+='<div class="cd sc"><div class="sl">Ahorro Objetivo</div><div class="sv" style="color:var(--green)">'+fmt(c.pA)+'</div></div>';
-    h+='<div class="cd sc"><div class="sl">Presup. Libre</div><div class="sv" style="color:'+(c.rest>=0?'var(--green)':'var(--red)')+'">'+fmt(c.rest)+'</div></div>';
+    if(sobrante >= 0){
+      h+='<div class="cd sc" style="grid-column:span 2"><div class="sl" style="color:var(--green)">&#127381; Ahorro del Mes</div><div class="sv" style="color:var(--green)">'+fmt(sobrante)+'</div></div>';
+    } else {
+      h+='<div class="cd sc" style="grid-column:span 2;background:var(--red-bg)"><div class="sl" style="color:var(--red)">&#9888; Faltante</div><div class="sv" style="color:var(--red)">'+fmt(Math.abs(sobrante))+'</div></div>';
+    }
     h+='</div>';
 
-    // CC Summary + last installment alerts
+    // CC Summary — solo Hogar
     if(c.ccActive.length > 0){
       h+='<div class="cd" style="padding:12px 14px">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
@@ -94,6 +110,7 @@ function render(){
       h+='</div>';
     }
 
+    // Por Categoria — solo gastos del Hogar (pCat ya filtra personales)
     var cats=[];
     var catKeys=Object.keys(c.pCat);
     for(var i=0; i<catKeys.length; i++) cats.push([catKeys[i], c.pCat[catKeys[i]]]);
@@ -104,13 +121,12 @@ function render(){
     
     if(cats.length>0){
       h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-      h+='<span class="ct" style="margin:0">Por Categoria</span>';
+      h+='<span class="ct" style="margin:0">Por Categor&#237;a (Hogar)</span>';
       h+='<button style="font-size:11px;color:var(--sol);background:none;border:none;cursor:pointer;font-weight:600;font-family:inherit" onclick="openCB()">Definir topes &#9656;</button></div>';
       for(var i=0;i<cats.length;i++){
         var cat=cats[i][0];var monto=cats[i][1];
         var tope=d.pC[cat]||0;
-        var tGastos = c.tV + c.tT; 
-        var catPct=tope>0?(monto/tope)*100:(tGastos>0?(monto/tGastos)*100:0);
+        var catPct=tope>0?(monto/tope)*100:(c.tG>0?(monto/c.tG)*100:0);
         var col=CCOLORS[cat]||"#6366f1";
         var over=tope>0&&monto>tope;
         var trend="";
