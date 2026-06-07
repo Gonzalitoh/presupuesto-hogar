@@ -131,10 +131,53 @@ function render(){
         var over=tope>0&&monto>tope;
         var trend="";
         if(prevC&&prevC.pCat){var pm2=prevC.pCat[cat]||0;if(pm2>0){var ch=((monto-pm2)/pm2)*100;if(Math.abs(ch)>1){trend='<span class="tbg '+(ch>0?'tu':'td')+'">'+(ch>0?'&uarr;':'&darr;')+' '+Math.abs(ch).toFixed(0)+'%</span>'}}}
-        h+='<div class="cbr"><div class="cbh"><span class="cbn">'+cic(cat)+' '+fmtCat(cat)+' '+trend+'</span>';
+        var isOpen = S.catDetail === cat;
+        h+='<div class="cbr">';
+        h+='<div class="cbh" onclick="S.catDetail=\''+(isOpen?'':cat.replace(/\'/g,"\\'"))+'\';;render()" style="cursor:pointer">';
+        h+='<span class="cbn">'+cic(cat)+' '+fmtCat(cat)+' '+trend+' <span style="font-size:10px;color:var(--text3)">'+(isOpen?'&#9650;':'&#9660;')+'</span></span>';
         h+='<span class="cba">'+fmt(monto)+(tope>0?' / '+fmt(tope):'')+'</span></div>';
         h+='<div class="cbt"><div class="cbf" style="width:'+Math.min(catPct,100)+'%;background:'+(over?'var(--red)':col)+'"></div></div>';
         if(over)h+='<div style="font-size:10px;color:var(--red);margin-top:2px">Excedido en '+fmt(monto-tope)+'</div>';
+        
+        // Expanded detail: list all items in this category
+        if(isOpen){
+          h+='<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">';
+          // Gastos variables del hogar en esta categoría
+          var gItems = d.gR || [];
+          for(var j=0;j<gItems.length;j++){
+            var g=gItems[j];
+            if(g.c !== cat) continue;
+            if(g.owner && g.owner !== "Hogar") continue;
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+            h+='<span style="color:var(--text2)">'+esc(g.d)+(g.f?' <span style="color:var(--text3);font-size:10px">'+g.f+'</span>':'')+'</span>';
+            h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(g.m)+'</strong>';
+            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditG('+g.id+')" title="Editar">&#9998;</button></span>';
+            h+='</div>';
+          }
+          // Cuotas de tarjeta del hogar en esta categoría
+          for(var j=0;j<c.ccActive.length;j++){
+            var a=c.ccActive[j];
+            if(a.tx.c !== cat) continue;
+            var qLbl = a.tx.fixed ? '(Fijo)' : '('+a.currQ+'/'+a.tx.q+')';
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+            h+='<span style="color:var(--sol)">&#128179; '+esc(a.tx.d)+' <span style="color:var(--text3);font-size:10px">'+qLbl+'</span></span>';
+            h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(a.amt)+'</strong>';
+            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditCCTx('+a.tx.id+')" title="Editar">&#9998;</button></span>';
+            h+='</div>';
+          }
+          // Gastos fijos en esta categoría
+          var gFijos = d.gF || [];
+          for(var j=0;j<gFijos.length;j++){
+            var gf=gFijos[j];
+            if(gf.n !== cat || !gf.m) continue;
+            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+            h+='<span style="color:var(--text2)">&#128204; '+esc(gf.n)+' <span style="color:var(--text3);font-size:10px">(Fijo)</span></span>';
+            h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(gf.m)+'</strong>';
+            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="setV(\'fijos\')" title="Ir a Fijos">&#9654;</button></span>';
+            h+='</div>';
+          }
+          h+='</div>';
+        }
         h+='</div>';
       }
       h+='</div>';

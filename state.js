@@ -3,7 +3,7 @@ var S={
     view:"dashboard", data:null, ccData:{cards:[], txs:[]}, toast:"",
     showConfig:false, showNewGasto:false, showNewShared:false, showCB:false, showReset:false, showResetFijos:false, showMP:false, showNewCard:false, showNewCCTx:false, showDelCard:0, showSync:false, showEditG:0, showEditCCTx:0, showEditCard:0,
     mpY:new Date().getFullYear(), gastoFilter:"",
-    cfgD:{}, cbD:{}, nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar",payM:"ARS",fixed:false},
+    cfgD:{}, cbD:{}, catDetail:"", nG:{d:"",m:"",c:"",f:"",owner:"Hogar"}, nS:{d:"",m:"",c:"",p:""}, nCard:{b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}, nCCTx:{cId:"",d:"",m:"",q:1,c:"",cur:"ARS",mUsd:"",t:"Hogar",payM:"ARS",fixed:false},
     eG:{id:0,d:"",m:"",c:"",f:"",owner:"Hogar"},
     eCCTx:{id:0,cId:"",d:"",m:"",q:1,c:"",t:"Hogar",fixed:false,fd:"",currq:"",cur:"ARS",payM:"ARS",mUsd:""},
     eCard:{id:0,b:"",br:"Visa",p:"",dCierre:"",dVenc:"",mVenc:"1"}
