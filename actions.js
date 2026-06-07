@@ -40,6 +40,48 @@ function syncCfgInputs(){
 
 // ==================================================
 
+function toggleCat(idx){
+    var cats = window._dashCats || [];
+    if(!cats[idx]) return;
+    var cat = cats[idx][0];
+    S.catDetail = (S.catDetail === cat) ? "" : cat;
+    render();
+}
+
+function filterGastos(val){
+    S.gastoFilter = val;
+    // Update the list without full re-render to preserve input focus
+    var gs = S.data.gR || [];
+    var filt = val.toLowerCase();
+    var filtered = [];
+    for(var i=gs.length-1;i>=0;i--){
+        var g=gs[i];
+        if(filt && g.d.toLowerCase().indexOf(filt)===-1 && g.c.toLowerCase().indexOf(filt)===-1) continue;
+        filtered.push(g);
+    }
+    var listEl = document.getElementById("gastos-list");
+    if(!listEl){ render(); return; }
+    var h = "";
+    if(!gs.length){ h='<div class="cd es">No hay gastos registrados este mes</div>'; }
+    else if(!filtered.length){ h='<div class="cd es">No se encontraron gastos con "'+esc(val)+'"</div>'; }
+    else for(var i=0;i<filtered.length;i++){
+        var g=filtered[i];
+        var ownerTag="";
+        if(g.owner && g.owner!=="Hogar"){
+            var pIdx2=-1; for(var k=0;k<(S.data.mbs||[]).length;k++){if((S.data.mbs||[])[k].n===g.owner){pIdx2=k;break}}
+            var pcol2=pIdx2>=0?PCOLORS[pIdx2%PCOLORS.length]:{c:"#6b7280",b:"#f3f4f6"};
+            ownerTag=' <span style="font-size:9px;background:'+pcol2.b+';color:'+pcol2.c+';padding:1px 5px;border-radius:4px;font-weight:600">'+esc(g.owner)+'</span>';
+        }
+        h+='<div class="cd gi">';
+        h+='<div class="ga" style="background:var(--sol-bg);color:var(--sol)">'+cic(g.c)+'</div>';
+        h+='<div class="gf"><div class="gd">'+esc(g.d)+ownerTag+'</div><div class="gm">'+g.c+' &middot; '+g.f+'</div></div>';
+        h+='<div class="gv">'+fmt(g.m)+'</div>';
+        h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditG('+g.id+')" title="Editar">&#9998;</button>';
+        h+='<button class="gx" onclick="delG('+g.id+')" title="Eliminar">&times;</button></div>';
+    }
+    listEl.innerHTML = h;
+}
+
 function SS(p){
     for(var k in p) S[k]=p[k];
     

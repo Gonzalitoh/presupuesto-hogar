@@ -120,6 +120,7 @@ function render(){
     var prevC=prevD?doCalc(prevD):null;
     
     if(cats.length>0){
+      window._dashCats = cats; // for toggleCat function
       h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
       h+='<span class="ct" style="margin:0">Por Categor&#237;a (Hogar)</span>';
       h+='<button style="font-size:11px;color:var(--sol);background:none;border:none;cursor:pointer;font-weight:600;font-family:inherit" onclick="openCB()">Definir topes &#9656;</button></div>';
@@ -133,7 +134,7 @@ function render(){
         if(prevC&&prevC.pCat){var pm2=prevC.pCat[cat]||0;if(pm2>0){var ch=((monto-pm2)/pm2)*100;if(Math.abs(ch)>1){trend='<span class="tbg '+(ch>0?'tu':'td')+'">'+(ch>0?'&uarr;':'&darr;')+' '+Math.abs(ch).toFixed(0)+'%</span>'}}}
         var isOpen = S.catDetail === cat;
         h+='<div class="cbr">';
-        h+='<div class="cbh" onclick="S.catDetail=\''+(isOpen?'':cat.replace(/\'/g,"\\'"))+'\';;render()" style="cursor:pointer">';
+        h+='<div class="cbh" onclick="toggleCat('+i+')" style="cursor:pointer">';
         h+='<span class="cbn">'+cic(cat)+' '+fmtCat(cat)+' '+trend+' <span style="font-size:10px;color:var(--text3)">'+(isOpen?'&#9650;':'&#9660;')+'</span></span>';
         h+='<span class="cba">'+fmt(monto)+(tope>0?' / '+fmt(tope):'')+'</span></div>';
         h+='<div class="cbt"><div class="cbf" style="width:'+Math.min(catPct,100)+'%;background:'+(over?'var(--red)':col)+'"></div></div>';
@@ -208,7 +209,7 @@ function render(){
     h+='<button class="bp" style="margin-bottom:12px" onclick="SS({showNewGasto:true})">+ Registrar Gasto Variable</button>';
     var gs=d.gR||[];
     if(gs.length > 3){
-      h+='<div style="margin-bottom:10px"><input type="text" placeholder="&#128269; Buscar gasto..." value="'+esc(S.gastoFilter)+'" oninput="S.gastoFilter=this.value;render()" style="padding:8px 12px;font-size:13px"></div>';
+      h+='<div style="margin-bottom:10px"><input type="text" id="gasto-search" placeholder="&#128269; Buscar gasto..." value="'+esc(S.gastoFilter)+'" oninput="filterGastos(this.value)" style="padding:8px 12px;font-size:13px"></div>';
     }
     var filtered = [];
     var filt = (S.gastoFilter||"").toLowerCase();
@@ -217,15 +218,25 @@ function render(){
       if(filt && g.d.toLowerCase().indexOf(filt)===-1 && g.c.toLowerCase().indexOf(filt)===-1) continue;
       filtered.push(g);
     }
-    if(!gs.length)h+='<div class="cd es">No hay gastos variables registrados este mes</div>';
-    else if(!filtered.length)h+='<div class="cd es">No se encontraron gastos con "'+esc(S.gastoFilter)+'"</div>';
-    else for(var i=0;i<filtered.length;i++){var g=filtered[i];
-      h+='<div class="cd gi">';
-      h+='<div class="ga" style="background:var(--sol-bg);color:var(--sol)">'+cic(g.c)+'</div>';
-      h+='<div class="gf"><div class="gd">'+esc(g.d)+'</div><div class="gm">'+g.c+' &middot; '+g.f+'</div></div>';
-      h+='<div class="gv">'+fmt(g.m)+'</div>';
-      h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditG('+g.id+')" title="Editar">&#9998;</button>';
-      h+='<button class="gx" onclick="delG('+g.id+')" title="Eliminar">&times;</button></div>';
+    if(!gs.length)h+='<div id="gastos-list"><div class="cd es">No hay gastos registrados este mes</div></div>';
+    else if(!filtered.length)h+='<div id="gastos-list"><div class="cd es">No se encontraron gastos con "'+esc(S.gastoFilter)+'"</div></div>';
+    else{
+      h+='<div id="gastos-list">';
+      for(var i=0;i<filtered.length;i++){var g=filtered[i];
+        var ownerTag="";
+        if(g.owner && g.owner!=="Hogar"){
+          var pIdx2=-1; for(var k=0;k<(S.data.mbs||[]).length;k++){if((S.data.mbs||[])[k].n===g.owner){pIdx2=k;break}}
+          var pcol2=pIdx2>=0?PCOLORS[pIdx2%PCOLORS.length]:{c:"#6b7280",b:"#f3f4f6"};
+          ownerTag=' <span style="font-size:9px;background:'+pcol2.b+';color:'+pcol2.c+';padding:1px 5px;border-radius:4px;font-weight:600">'+esc(g.owner)+'</span>';
+        }
+        h+='<div class="cd gi">';
+        h+='<div class="ga" style="background:var(--sol-bg);color:var(--sol)">'+cic(g.c)+'</div>';
+        h+='<div class="gf"><div class="gd">'+esc(g.d)+ownerTag+'</div><div class="gm">'+g.c+' &middot; '+g.f+'</div></div>';
+        h+='<div class="gv">'+fmt(g.m)+'</div>';
+        h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditG('+g.id+')" title="Editar">&#9998;</button>';
+        h+='<button class="gx" onclick="delG('+g.id+')" title="Eliminar">&times;</button></div>';
+      }
+      h+='</div>';
     }
   }
 
