@@ -237,30 +237,49 @@ function render(){
         h+='</div>';
         h+='<div class="cd sc" style="'+(saldo>=0?'':'background:var(--red-bg)')+'"><div class="sl" style="color:'+(saldo>=0?'var(--green)':'var(--red)')+'">(=) Balance Personal</div><div class="sv" style="color:'+(saldo>=0?'var(--green)':'var(--red)')+'">'+fmt(saldo)+'</div></div>';
 
-        // Detalle gastos personales
-        if(gastosItems.length > 0){
-          h+='<div class="cd"><div class="ct">Gastos de '+esc(mb.n)+'</div>';
-          for(var i=0;i<gastosItems.length;i++){
-            var g=gastosItems[i];
-            h+='<div class="fr"><div class="fn"><div class="gd">'+esc(g.d)+'</div><div class="gm">'+g.c+(g.f?' &middot; '+g.f:'')+'</div></div>';
-            h+='<div class="fv">'+fmt(g.m)+'</div>';
-            h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditG('+g.id+')">&#9998;</button></div>';
+        // Detalle por categoria de gastos personales
+        var pCatP = {};
+        for(var i=0;i<gastosItems.length;i++){ var g=gastosItems[i]; pCatP[g.c]=(pCatP[g.c]||0)+g.m; }
+        for(var i=0;i<tarjetasItems.length;i++){ var apt=tarjetasItems[i]; pCatP[apt.tx.c]=(pCatP[apt.tx.c]||0)+apt.amt; }
+        
+        if(Object.keys(pCatP).length > 0){
+          h+='<div class="cd"><div class="ct">Gastos de '+esc(mb.n)+' por Categor&#237;a</div>';
+          var catsPersonal=[];
+          for(var cat in pCatP) catsPersonal.push([cat, pCatP[cat]]);
+          catsPersonal.sort(function(a,b){return b[1]-a[1]});
+          for(var i=0;i<catsPersonal.length;i++){
+            var cat=catsPersonal[i][0]; var monto=catsPersonal[i][1];
+            var catPct=totalGastosPersonal>0?(monto/totalGastosPersonal)*100:0;
+            var col=CCOLORS[cat]||"#6366f1";
+            var isOpenPC=S.catDetail===("PC_"+pIdx+"_"+i);
+            h+='<div class="cbr">';
+            h+='<div class="cbh" onclick="toggleCatPC('+pIdx+','+i+')" style="cursor:pointer">';
+            h+='<span class="cbn">'+cic(cat)+' '+fmtCat(cat)+' <span style="font-size:10px;color:var(--text3)">'+(isOpenPC?'&#9650;':'&#9660;')+'</span></span>';
+            h+='<span class="cba">'+fmt(monto)+'</span></div>';
+            h+='<div class="cbt"><div class="cbf" style="width:'+Math.min(catPct,100)+'%;background:'+col+'"></div></div>';
+            if(isOpenPC){
+              h+='<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">';
+              for(var j=0;j<gastosItems.length;j++){
+                var gi=gastosItems[j]; if(gi.c!==cat) continue;
+                h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+                h+='<span>'+esc(gi.d)+(gi.f?' <span style="color:var(--text3);font-size:10px">'+gi.f+'</span>':'')+'</span>';
+                h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(gi.m)+'</strong>';
+                h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditG('+gi.id+')">&#9998;</button></span></div>';
+              }
+              for(var j=0;j<tarjetasItems.length;j++){
+                var ti=tarjetasItems[j]; if(ti.tx.c!==cat) continue;
+                var qLbl=ti.tx.fixed?'(Fijo)':'(Cuota '+ti.currQ+'/'+ti.tx.q+')';
+                h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
+                h+='<span style="color:var(--sol)">&#128179; '+esc(ti.tx.d)+' <span style="color:var(--text3);font-size:10px">'+qLbl+'</span></span>';
+                h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(ti.amt)+'</strong>';
+                h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditCCTx('+ti.tx.id+')">&#9998;</button></span></div>';
+              }
+              h+='</div>';
+            }
+            h+='</div>';
           }
           h+='</div>';
-        }
-        // Detalle tarjetas personales
-        if(tarjetasItems.length > 0){
-          h+='<div class="cd"><div class="ct">Tarjetas de '+esc(mb.n)+'</div>';
-          for(var i=0;i<tarjetasItems.length;i++){
-            var apt=tarjetasItems[i];
-            var qLbl=apt.tx.fixed?'(Fijo)':'(Cuota '+apt.currQ+'/'+apt.tx.q+')';
-            h+='<div class="fr"><div class="fn"><div class="gd">'+esc(apt.tx.d)+'</div><div class="gm">'+apt.tx.c+' &middot; '+qLbl+'</div></div>';
-            h+='<div class="fv">'+fmt(apt.amt)+'</div>';
-            h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditCCTx('+apt.tx.id+')">&#9998;</button></div>';
-          }
-          h+='</div>';
-        }
-        if(gastosItems.length===0 && tarjetasItems.length===0){
+        } else {
           h+='<div class="cd es">Sin gastos personales registrados para '+esc(mb.n)+'</div>';
         }
       }

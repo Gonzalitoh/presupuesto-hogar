@@ -150,12 +150,17 @@ function doCalc(d){
   var rest = limit - tG;
   
   var pCat={}; var pCatPersonal={};
+  // Gastos fijos del hogar
+  for(var i=0; i<gF.length; i++){if(gF[i].m>0){ pCat[gF[i].n]=(pCat[gF[i].n]||0)+gF[i].m; }}
+  // Gastos variables: hogar vs personal
   for(var i=0; i<gV.length; i++){
     var g=gV[i];
     if(g.owner && g.owner!=="Hogar"){ pCatPersonal[g.c]=(pCatPersonal[g.c]||0)+g.m; }
     else { pCat[g.c]=(pCat[g.c]||0)+g.m; }
   }
+  // Cuotas tarjeta hogar
   for(var i=0; i<ccActive.length; i++){var a=ccActive[i]; pCat[a.tx.c]=(pCat[a.tx.c]||0)+a.amt}
+  // Cuotas tarjeta personal
   for(var i=0; i<ccActivePersonal.length; i++){var ap=ccActivePersonal[i]; pCatPersonal[ap.tx.c]=(pCatPersonal[ap.tx.c]||0)+ap.amt}
   
   var sh=d.gC||[]; var tS_manual=0; 
