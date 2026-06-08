@@ -20,7 +20,7 @@ function render(){
     h+='<div class="cb" onclick="openCfg()">&#9881;&#65039; Configurar personas e ingresos</div>';
   }
 
-  var tabList=[["dashboard","Resumen"],["gastos","Gastos"],["tarjetas","Tarjetas"],["fijos","Fijos"],["balance","Balance"]];
+  var tabList=[["dashboard","Resumen Hogar"],["personal","Resumen Personal"],["gastos","Gastos"],["tarjetas","Tarjetas"],["fijos","Fijos"],["balance","Balance"]];
   tabList.push(["graficos","&#128202; Evolucion"]);
   tabList.push(["sync","&#128260; Sync"]);
 
@@ -51,7 +51,7 @@ function render(){
     var ppA = totalAporte > 0 ? Math.min((c.tG / totalAporte) * 100, 130) : 0;
     var pcA = ppA > 100 ? 'var(--red)' : ppA > 80 ? '#f59e0b' : 'var(--green)';
 
-    // Header: Aporte Total al Hogar (not incomes)
+    // Tarjeta 1: Aporte Total al Hogar
     h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:flex-start">';
     h+='<div><div class="sl">Aporte Total al Hogar</div><div style="font-size:22px;font-weight:700">'+fmt(totalAporte)+'</div></div>';
     if(c.mStats.length > 0){
@@ -68,24 +68,25 @@ function render(){
     }
     h+='</div></div>';
 
-    // Progress bar: gastos vs aporte
-    h+='<div class="cd">';
-    h+='<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
-    h+='<span style="font-size:13px;font-weight:600">Gastos del Hogar vs Aporte</span>';
-    h+='<span style="font-size:13px;font-weight:600;color:'+(sobrante>=0?'var(--green)':'var(--red)')+'">'+(sobrante>=0?'Quedan '+fmt(sobrante):'Excedido '+fmt(Math.abs(sobrante)))+'</span></div>';
-    h+='<div class="pt"><div class="pf" style="width:'+Math.min(ppA,100)+'%;background:'+pcA+'"></div></div>';
-    h+='<div class="pl"><span>Gastado: '+fmt(c.tG)+'</span><span>Aporte: '+fmt(totalAporte)+'</span></div></div>';
-
-    // Cards: Fijos, Variables, Tarjetas, Total Gastos, Sobrante/Faltante
+    // Tarjeta 2: Total Gastos Hogar (breakdown)
+    h+='<div class="cd"><div class="sl" style="margin-bottom:10px">Total Gastos Hogar</div>';
     h+='<div class="g2">';
     h+='<div class="cd sc"><div class="sl">Gastos Fijos</div><div class="sv">'+fmt(c.tF)+'</div></div>';
     h+='<div class="cd sc"><div class="sl">Gastos Variables</div><div class="sv">'+fmt(c.tV)+'</div></div>';
     h+='<div class="cd sc" style="background:var(--sol-bg)"><div class="sl">Tarjetas (Hogar)</div><div class="sv" style="color:var(--sol)">'+fmt(c.tT)+'</div></div>';
-    h+='<div class="cd sc" style="background:var(--red-bg)"><div class="sl" style="color:var(--red)">Total Gastos Hogar</div><div class="sv" style="color:var(--red)">'+fmt(c.tG)+'</div></div>';
+    h+='<div class="cd sc" style="background:var(--red-bg)"><div class="sl" style="color:var(--red)">Total</div><div class="sv" style="color:var(--red)">'+fmt(c.tG)+'</div></div>';
+    h+='</div></div>';
+
+    // Tarjeta 3: Diferencia Aporte vs Gastos
+    h+='<div class="cd"><div style="display:flex;justify-content:space-between;margin-bottom:6px">';
+    h+='<span style="font-size:13px;font-weight:600">Gastos del Hogar vs Aporte</span>';
+    h+='<span style="font-size:13px;font-weight:600;color:'+(sobrante>=0?'var(--green)':'var(--red)')+'">'+(sobrante>=0?'Quedan '+fmt(sobrante):'Excedido '+fmt(Math.abs(sobrante)))+'</span></div>';
+    h+='<div class="pt"><div class="pf" style="width:'+Math.min(ppA,100)+'%;background:'+pcA+'"></div></div>';
+    h+='<div class="pl"><span>Gastado: '+fmt(c.tG)+'</span><span>Aporte: '+fmt(totalAporte)+'</span></div>';
     if(sobrante >= 0){
-      h+='<div class="cd sc" style="grid-column:span 2"><div class="sl" style="color:var(--green)">&#127381; Ahorro del Mes</div><div class="sv" style="color:var(--green)">'+fmt(sobrante)+'</div></div>';
+      h+='<div style="margin-top:8px;text-align:center;font-size:14px;font-weight:700;color:var(--green)">&#127381; Ahorro del mes: '+fmt(sobrante)+'</div>';
     } else {
-      h+='<div class="cd sc" style="grid-column:span 2;background:var(--red-bg)"><div class="sl" style="color:var(--red)">&#9888; Faltante</div><div class="sv" style="color:var(--red)">'+fmt(Math.abs(sobrante))+'</div></div>';
+      h+='<div style="margin-top:8px;text-align:center;font-size:14px;font-weight:700;color:var(--red)">&#9888;&#65039; Faltante: '+fmt(Math.abs(sobrante))+'</div>';
     }
     h+='</div>';
 
@@ -184,76 +185,86 @@ function render(){
       h+='</div>';
     }
 
-    // Por Categoria Personal
-    window._dashCatsP = [];
-    var catKeysP=Object.keys(c.pCatPersonal||{});
-    for(var i=0; i<catKeysP.length; i++) window._dashCatsP.push([catKeysP[i], c.pCatPersonal[catKeysP[i]]]);
-    window._dashCatsP.sort(function(a,b){return b[1]-a[1]});
-    if(window._dashCatsP.length>0){
-      var totalPersonal=0;
-      for(var i=0;i<window._dashCatsP.length;i++) totalPersonal+=window._dashCatsP[i][1];
-      h+='<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-      h+='<span class="ct" style="margin:0">Por Categor&#237;a (Personal)</span>';
-      h+='<span style="font-size:12px;font-weight:700;color:var(--text2)">'+fmt(totalPersonal)+'</span></div>';
-      for(var i=0;i<window._dashCatsP.length;i++){
-        var catP=window._dashCatsP[i][0]; var montoP=window._dashCatsP[i][1];
-        var catPctP=totalPersonal>0?(montoP/totalPersonal)*100:0;
-        var colP=CCOLORS[catP]||"#6366f1";
-        var isOpenP=S.catDetail===("P_"+i);
-        h+='<div class="cbr">';
-        h+='<div class="cbh" onclick="toggleCatP('+i+')" style="cursor:pointer">';
-        h+='<span class="cbn">'+cic(catP)+' '+fmtCat(catP)+' <span style="font-size:10px;color:var(--text3)">'+(isOpenP?'&#9650;':'&#9660;')+'</span></span>';
-        h+='<span class="cba">'+fmt(montoP)+'</span></div>';
-        h+='<div class="cbt"><div class="cbf" style="width:'+Math.min(catPctP,100)+'%;background:'+colP+'"></div></div>';
-        if(isOpenP){
-          h+='<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">';
-          var gItemsP=d.gR||[];
-          for(var j=0;j<gItemsP.length;j++){
-            var gp=gItemsP[j];
-            if(gp.c!==catP||!gp.owner||gp.owner==="Hogar") continue;
-            var pcolP=null;
-            for(var k=0;k<(d.mbs||[]).length;k++){if((d.mbs||[])[k].n===gp.owner){pcolP=PCOLORS[k%PCOLORS.length];break}}
-            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
-            h+='<span>'+esc(gp.d);
-            if(pcolP) h+=' <span style="font-size:9px;background:'+pcolP.b+';color:'+pcolP.c+';padding:1px 5px;border-radius:4px;font-weight:600">'+esc(gp.owner)+'</span>';
-            if(gp.f) h+=' <span style="color:var(--text3);font-size:10px">'+gp.f+'</span>';
-            h+='</span><span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(gp.m)+'</strong>';
-            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditG('+gp.id+')">&#9998;</button></span></div>';
-          }
-          for(var j=0;j<c.ccActivePersonal.length;j++){
-            var ap=c.ccActivePersonal[j];
-            if(ap.tx.c!==catP) continue;
-            var qLblP=ap.tx.fixed?'(Fijo)':'('+ap.currQ+'/'+ap.tx.q+')';
-            h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)">';
-            h+='<span style="color:var(--sol)">&#128179; '+esc(ap.tx.d)+' <span style="color:var(--text3);font-size:10px">'+qLblP+'</span></span>';
-            h+='<span style="display:flex;align-items:center;gap:8px"><strong>'+fmt(ap.amt)+'</strong>';
-            h+='<button style="font-size:12px;color:var(--sol);background:none;border:none;cursor:pointer;padding:0" onclick="openEditCCTx('+ap.tx.id+')">&#9998;</button></span></div>';
-          }
-          h+='</div>';
-        }
-        h+='</div>';
-      }
-      h+='</div>';
-    }
-
-    if((d.gC||[]).length>0 && (d.mbs||[]).length >= 2){
-      h+='<div class="cd" style="background:#f5f5f3"><div class="ct">Gastos compartidos</div>';
-      var dts=[], cds=[];
-      for(var i=0;i<c.mStats.length;i++){
-          var st = c.mStats[i];
-          if(st.bal > 1) cds.push(st.n + ' recibe <strong>'+fmt(Math.abs(st.bal))+'</strong>');
-          else if(st.bal < -1) dts.push(st.n + ' debe <strong>'+fmt(Math.abs(st.bal))+'</strong>');
-      }
-      if(dts.length === 0) h+='<p style="font-size:13px;color:var(--text3)">Estan parejos &#128076;</p>';
-      else{
-          for(var i=0;i<dts.length;i++) h+='<p style="font-size:13px">'+dts[i]+'</p>';
-          for(var i=0;i<cds.length;i++) h+='<p style="font-size:13px">'+cds[i]+'</p>';
-      }
-      h+='</div>';
-    }
+    // Por Categoria Personal — removed from Resumen Hogar (moved to Resumen Personal)
 
     h+='<div class="cd"><div class="ct">&#128221; Notas del mes</div>';
     h+='<textarea class="na" onblur="saveNotes(this.value)" placeholder="Anotaciones, recordatorios...">'+esc(d.notas||'')+'</textarea></div>';
+  }
+
+  // === RESUMEN PERSONAL ===
+  if(S.view==="personal"){
+    if((d.mbs||[]).length === 0){
+      h+='<div class="cd es">Configura las personas e ingresos primero</div>';
+    } else {
+      // Person selector buttons
+      h+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+      for(var i=0;i<(d.mbs||[]).length;i++){
+        var pcol=PCOLORS[i%PCOLORS.length];
+        var isSel=(S.personalView===i);
+        h+='<button onclick="S.personalView='+i+';render()" style="flex:1;padding:10px;border-radius:10px;border:2px solid '+(isSel?pcol.c:'var(--border)')+';background:'+(isSel?pcol.b:'var(--card)')+';color:'+(isSel?pcol.c:'var(--text)')+';font-weight:'+(isSel?'700':'400')+';cursor:pointer;font-family:inherit;font-size:14px">'+esc(d.mbs[i].n)+'</button>';
+      }
+      h+='</div>';
+
+      var pIdx = (S.personalView !== undefined && S.personalView < (d.mbs||[]).length) ? S.personalView : 0;
+      var mb = d.mbs[pIdx];
+      var st = null;
+      for(var i=0;i<c.mStats.length;i++){if(c.mStats[i].n===mb.n){st=c.mStats[i];break}}
+      if(!st){ h+='<div class="cd es">Sin datos de balance para '+esc(mb.n)+'</div>'; }
+      else {
+        var pcolSel = PCOLORS[pIdx%PCOLORS.length];
+
+        // Gastos personales de esta persona
+        var gastosP=0; var gastosItems=[];
+        var gR=d.gR||[];
+        for(var i=0;i<gR.length;i++){if(gR[i].owner===mb.n){gastosP+=gR[i].m;gastosItems.push(gR[i]);}}
+        // Tarjetas personales
+        var tarjetasP=0; var tarjetasItems=[];
+        for(var i=0;i<c.ccActivePersonal.length;i++){
+          var apt=c.ccActivePersonal[i];
+          var cardOwner=null;
+          for(var k=0;k<S.ccData.cards.length;k++){if(S.ccData.cards[k].id===apt.tx.cId){cardOwner=S.ccData.cards[k].p;break}}
+          if(cardOwner===mb.n){tarjetasP+=apt.amt;tarjetasItems.push(apt);}
+        }
+        var totalGastosPersonal = gastosP + tarjetasP;
+        var aporte = st.a || 0;
+        var saldo = mb.i - aporte - totalGastosPersonal;
+
+        // Cards resumen personal
+        h+='<div class="cd sc"><div class="sl">Ingreso</div><div class="sv">'+fmt(mb.i)+'</div></div>';
+        h+='<div class="g2">';
+        h+='<div class="cd sc" style="background:var(--red-bg)"><div class="sl" style="color:var(--red)">(-) Aporte al Hogar</div><div class="sv" style="color:var(--red)">'+fmt(aporte)+'</div></div>';
+        h+='<div class="cd sc" style="background:var(--red-bg)"><div class="sl" style="color:var(--red)">(-) Gastos Personales</div><div class="sv" style="color:var(--red)">'+fmt(totalGastosPersonal)+'</div></div>';
+        h+='</div>';
+        h+='<div class="cd sc" style="'+(saldo>=0?'':'background:var(--red-bg)')+'"><div class="sl" style="color:'+(saldo>=0?'var(--green)':'var(--red)')+'">(=) Balance Personal</div><div class="sv" style="color:'+(saldo>=0?'var(--green)':'var(--red)')+'">'+fmt(saldo)+'</div></div>';
+
+        // Detalle gastos personales
+        if(gastosItems.length > 0){
+          h+='<div class="cd"><div class="ct">Gastos de '+esc(mb.n)+'</div>';
+          for(var i=0;i<gastosItems.length;i++){
+            var g=gastosItems[i];
+            h+='<div class="fr"><div class="fn"><div class="gd">'+esc(g.d)+'</div><div class="gm">'+g.c+(g.f?' &middot; '+g.f:'')+'</div></div>';
+            h+='<div class="fv">'+fmt(g.m)+'</div>';
+            h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditG('+g.id+')">&#9998;</button></div>';
+          }
+          h+='</div>';
+        }
+        // Detalle tarjetas personales
+        if(tarjetasItems.length > 0){
+          h+='<div class="cd"><div class="ct">Tarjetas de '+esc(mb.n)+'</div>';
+          for(var i=0;i<tarjetasItems.length;i++){
+            var apt=tarjetasItems[i];
+            var qLbl=apt.tx.fixed?'(Fijo)':'(Cuota '+apt.currQ+'/'+apt.tx.q+')';
+            h+='<div class="fr"><div class="fn"><div class="gd">'+esc(apt.tx.d)+'</div><div class="gm">'+apt.tx.c+' &middot; '+qLbl+'</div></div>';
+            h+='<div class="fv">'+fmt(apt.amt)+'</div>';
+            h+='<button class="gx" style="color:var(--sol);font-size:14px" onclick="openEditCCTx('+apt.tx.id+')">&#9998;</button></div>';
+          }
+          h+='</div>';
+        }
+        if(gastosItems.length===0 && tarjetasItems.length===0){
+          h+='<div class="cd es">Sin gastos personales registrados para '+esc(mb.n)+'</div>';
+        }
+      }
+    }
   }
 
   // === GASTOS VARIABLES ===
