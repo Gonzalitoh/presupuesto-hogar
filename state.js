@@ -68,8 +68,11 @@ function doCalc(d){
   var tF=0; var gF = d.gF || [];
   for(var i=0; i<gF.length; i++) tF += (gF[i].m||0);
   
-  var gV=d.gR||[]; var tV=0; 
-  for(var i=0; i<gV.length; i++) tV += (gV[i].m||0);
+  var gV=d.gR||[]; var tV=0; var tVPersonal=0;
+  for(var i=0; i<gV.length; i++){
+    if(gV[i].owner && gV[i].owner!=="Hogar"){ tVPersonal += (gV[i].m||0); }
+    else { tV += (gV[i].m||0); }
+  }
   
   var tT=0; var ccActive=[]; var ccActivePersonal=[];
   var ccTotalByPerson = {}; 
@@ -193,10 +196,24 @@ function doCalc(d){
 
           var cardBill = cardBillByPerson[m.n] || 0;
           
+          // Personal variable expenses for this person
+          var personalVarExp = 0;
+          for(var j=0; j<gV.length; j++){
+              if(gV[j].owner === m.n) personalVarExp += (gV[j].m||0);
+          }
+          // Personal CC expenses for this person
+          var personalCCExp = 0;
+          for(var j=0; j<ccActivePersonal.length; j++){
+              var aptx = ccActivePersonal[j].tx;
+              var aptCard = null;
+              for(var k=0; k<S.ccData.cards.length; k++){if(S.ccData.cards[k].id===aptx.cId){aptCard=S.ccData.cards[k];break}}
+              if(aptCard && aptCard.p === m.n) personalCCExp += ccActivePersonal[j].amt;
+          }
+          
           var cashToHogar = aporteEsperado - pS_total;
           
           var initSobrante = (m.i||0) - aporteEsperado;
-          var finalSobrante = (m.i || 0) - cardBill - pS_manual - cashToHogar;
+          var finalSobrante = (m.i || 0) - cardBill - pS_manual - cashToHogar - personalVarExp - personalCCExp;
 
           mStats.push({ 
               n: m.n, 
@@ -212,11 +229,12 @@ function doCalc(d){
               cardBill: cardBill,
               cashToHogar: cashToHogar,
               initSobrante: initSobrante,
-              finalSobrante: finalSobrante
+              finalSobrante: finalSobrante,
+              personalExp: personalVarExp + personalCCExp
           });
       }
   }
-  return{iT:iT, mbs:mbs, mStats:mStats, tF:tF, tV:tV, tT:tT, ccActive:ccActive, ccActivePersonal:ccActivePersonal, tG:tG, pG:pG, pA:pA, limit:limit, rest:rest, pCat:pCat, pCatPersonal:pCatPersonal, tS:tS}
+  return{iT:iT, mbs:mbs, mStats:mStats, tF:tF, tV:tV, tVPersonal:tVPersonal, tT:tT, ccActive:ccActive, ccActivePersonal:ccActivePersonal, tG:tG, pG:pG, pA:pA, limit:limit, rest:rest, pCat:pCat, pCatPersonal:pCatPersonal, tS:tS}
 }
 function cc(){return doCalc(S.data)}
 
